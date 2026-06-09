@@ -1,0 +1,159 @@
+/* PAGE LAYOUT */
+.donate-page {
+  padding: 20px;
+  background: #f8faf8;
+  min-height: 100vh;
+}
+
+.donate-grid {
+  display: flex;
+  gap: 20px;
+}
+
+/* LEFT CARD */
+.donate-card {
+  flex: 1;
+  background: white;
+  padding: 20px;
+
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+/* INPUTS */
+.donate-card input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* BUTTON GROUP */
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-group button {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.post-btn {
+  background: #2e7d32;
+  color: white;
+}
+
+.secondary-btn {
+  background: #f1f8f1;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.secondary-btn:hover {
+  background: #e8f5e9;
+}
+
+/* TABLE */
+.food-table {
+  flex: 2;
+  background: white;
+  padding: 20px;
+
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+/* STATUS COLORS */
+.status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.status.available {
+  color: #2e7d32;
+}
+
+.status.claimed {
+  color: #1976d2;
+}
+
+.status.expired {
+  color: #d32f2f;
+}
+
+.icon {
+  font-size: 14px;
+}
+
+/* PAGINATION */
+.pagination {
+  margin-top: 15px;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.pagination button {
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pagination button.active {
+  background: #2e7d32;
+  color: white;
+}
+
+/* MAP OVERLAY */
+.map-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 100%;
+
+  background: rgba(0,0,0,0.55);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding-top: 60px; /* gives breathing space from navbar */
+}
+
+.map-modal {
+  background: white;
+  padding: 16px;
+
+  border-radius: 12px;
+
+  width: 90%;
+  max-width: 900px;
+
+  max-height: 85vh;
+  overflow: hidden;
+}

@@ -1,0 +1,74 @@
+/* PAGE */
+.claims-page {
+  padding: 20px;
+  background: #f8faf8;
+  min-height: 100vh;
+}
+
+/* TITLE */
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2e7d32;
+  margin-bottom: 20px;
+}
+
+/* EMPTY STATE */
+.empty {
+  color: #777;
+}
+
+/* GRID */
+.claims-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 15px;
+}
+
+/* CARD */
+.claim-card {
+  background: white;
+  padding: 16px;
+
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* HEADER */
+.claim-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+/* TEXT */
+.meta {
+  font-size: 14px;
+  color: #333;
+}
+
+/* LOCATION + TIME */
+.location,
+.time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  font-size: 13px;
+}
+
+/* ICONS */
+.icon {
+  color: #2e7d32;
+}
+
+.icon.small {
+  font-size: 12px;
+}

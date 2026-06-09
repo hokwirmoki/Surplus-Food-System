@@ -1,0 +1,162 @@
+/* FULL PAGE */
+.otp-page {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* LEFT PANEL */
+.otp-left {
+  flex: 1;
+  background: linear-gradient(135deg, #1b5e20, #2e7d32);
+  color: white;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  padding: 50px 60px;
+}
+
+/* LOGO */
+.otp-logo {
+  width: 70px;
+  height: 70px;
+  margin-bottom: 16px;
+
+  background: white;
+  border-radius: 12px;
+  padding: 8px;
+}
+
+/* TITLE */
+.otp-left h1 {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+/* TEXT */
+.otp-left p {
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 380px;
+  opacity: 0.9;
+}
+
+/* MISSION */
+.otp-mission {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* RIGHT PANEL */
+.otp-right {
+  flex: 1;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background: #f8faf8;
+  padding: 20px;
+}
+
+/* CARD */
+.otp-card {
+  width: 100%;
+  max-width: 360px;
+
+  background: #ffffff;
+  padding: 28px;
+
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+
+  text-align: center;
+}
+
+/* TITLE */
+.otp-card h2 {
+  margin-bottom: 18px;
+  font-size: 20px;
+  color: #2e7d32;
+}
+
+/* INPUT */
+.otp-card input {
+  width: 100%;
+  padding: 12px 14px;
+
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+
+  font-size: 14px;
+
+  outline: none;
+  margin-bottom: 14px;
+
+  transition: 0.2s;
+}
+
+.otp-card input:focus {
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
+/* BUTTON */
+.otp-card button {
+  width: 100%;
+  padding: 12px;
+
+  background: #2e7d32;
+  color: white;
+
+  border: none;
+  border-radius: 8px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.otp-card button:hover {
+  background: #256428;
+}
+
+/* HINT TEXT */
+.hint {
+  margin-top: 14px;
+  font-size: 12px;
+  color: #666;
+}
+
+/* MISSION ITEMS (reuse pattern) */
+.mission-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.mission-icon {
+  font-size: 18px;
+  color: #c8e6c9;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .otp-page {
+    flex-direction: column;
+  }
+
+  .otp-left {
+    padding: 35px;
+    text-align: center;
+    align-items: center;
+  }
+}

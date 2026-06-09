@@ -1,0 +1,237 @@
+/* PAGE */
+.available-page {
+  padding: 20px;
+  background: #f8faf8;
+  min-height: 100vh;
+}
+
+/* TITLE */
+.page-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2e7d32;
+  margin-bottom: 20px;
+}
+
+/* EMPTY STATE */
+.empty-text {
+  color: #777;
+}
+
+/* GRID */
+.food-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 15px;
+}
+
+/* CARD */
+.food-card {
+  background: white;
+  padding: 16px;
+
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* HEADER */
+.food-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+/* TEXT */
+.meta {
+  font-size: 14px;
+  color: #333;
+}
+
+.location,
+.expiry,
+.time-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+/* ICONS */
+.icon {
+  color: #2e7d32;
+}
+
+.icon.small {
+  font-size: 12px;
+}
+
+/* TIME LEFT */
+.time-left {
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.claim-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.claim-details label {
+  font-size: 13px;
+  color: #555;
+}
+
+.payment-summary {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #e8f5e9;
+  border: 1px solid #c8e6c9;
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+.payment-summary.modal-value {
+  background: #f1f8f3;
+}
+
+.payment-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 20px;
+}
+
+.payment-modal-card {
+  width: min(560px, 100%);
+  background: white;
+  border-radius: 24px;
+  padding: 26px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.16);
+}
+
+.payment-modal-header h3 {
+  margin: 0;
+  color: #163a20;
+}
+
+.payment-modal-header p {
+  margin: 10px 0 0;
+  color: #5a6f64;
+  line-height: 1.6;
+}
+
+.payment-modal-body {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.payment-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payment-modal-field label {
+  color: #556668;
+  font-size: 13px;
+}
+
+.payment-modal-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #dfe6e0;
+  font-size: 14px;
+}
+
+.payment-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+/* ACTIONS */
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* BUTTONS */
+.map-btn,
+.claim-btn {
+  flex: 1;
+  padding: 8px;
+
+  border: none;
+  border-radius: 8px;
+
+  font-size: 13px;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  transition: 0.2s;
+}
+
+/* MAP BUTTON */
+.map-btn {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.map-btn:hover {
+  background: #bbdefb;
+}
+
+/* CLAIM BUTTON */
+.claim-btn {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.claim-btn:hover {
+  background: #c8e6c9;
+}
+
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.claim-input-group {
+  display: flex;
+  margin-top: 10px;
+}
+
+.claim-input-group input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+}

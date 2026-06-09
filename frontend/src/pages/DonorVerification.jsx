@@ -1,0 +1,319 @@
+import { useState, useEffect } from "react";
+import API from "../services/api";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import { FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi";
+import "../styles/register.css";
+
+function DonorVerification() {
+  const navigate = useNavigate();
+  const storedUser = JSON.parse(localStorage.getItem("user")) || {};
+  const [user, setUser] = useState(storedUser);
+  const [vendorType, setVendorType] = useState("individual");
+  const [fileData, setFileData] = useState(null);
+  const [payContact, setPayContact] = useState("");
+  const [paid, setPaid] = useState(false);
+  const [paymentProvider, setPaymentProvider] = useState("MTN");
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState(storedUser.verification_status || "unverified");
+  const [loading, setLoading] = useState(false);
+  const [paymentNumber, setPaymentNumber] = useState("");
+  const [history, setHistory] = useState([]);
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 5;
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setFileData({ name: file.name, content: reader.result });
+    reader.readAsDataURL(file);
+  };
+
+  const openPaymentModal = () => {
+    setShowPaymentModal(true);
+  };
+
+  const closePaymentModal = () => {
+    setShowPaymentModal(false);
+  };
+
+  const confirmPayment = () => {
+    if (!paymentNumber.trim()) {
+      return toast.error("Enter your payment phone number");
+    }
+
+    setPayContact(paymentNumber);
+    setPaid(true);
+    setShowPaymentModal(false);
+    toast.success("Payment recorded successfully");
+  };
+
+  const submitApplication = async () => {
+    if (!fileData) return toast.error("Please upload a verification document");
+    if (!paid) return toast.error("Please pay UGX 50,000 before submitting your application");
+
+    const token = localStorage.getItem("token");
+    if (!token) return toast.error("You must be logged in to submit your application");
+
+    setLoading(true);
+    try {
+      const res = await API.post(
+        "/user/donor/verify",
+        {
+          vendorType,
+          document: fileData,
+          paymentProvider,
+          paymentContact: payContact,
+          paid
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      const updatedUser = res.data.user;
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      setApplicationStatus(updatedUser.verification_status || "pending");
+      setHistory([{
+        id: updatedUser.id,
+        type: updatedUser.documents?.type || vendorType,
+        documentName: updatedUser.documents?.document?.name || 'Uploaded document',
+        provider: updatedUser.documents?.paymentProvider || paymentProvider,
+        paymentNumber: updatedUser.documents?.paymentContact || payContact,
+        status: updatedUser.verification_status || 'pending',
+        amount: 'UGX 50,000'
+      }]);
+
+      toast.success("Verification application submitted");
+      navigate("/donor");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Submission failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderStatus = (status) => {
+    if (status === "paid" || status === "verified") {
+      return (
+        <span style={{ color: '#1d9d74', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <FiCheckCircle /> {status === 'paid' ? 'Paid' : 'Verified'}
+        </span>
+      );
+    }
+
+    if (status === "pending") {
+      return (
+        <span style={{ color: '#f0a500', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <FiClock /> Pending
+        </span>
+      );
+    }
+
+    return (
+      <span style={{ color: '#d94343', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <FiXCircle /> Not paid
+      </span>
+    );
+  };
+
+  const renderVerificationStatus = (status) => {
+    if (status === "verified") {
+      return (
+        <span style={{ color: '#1d9d74', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <FiCheckCircle /> Verified
+        </span>
+      );
+    }
+
+    if (status === "pending") {
+      return (
+        <span style={{ color: '#f0a500', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <FiClock /> Pending
+        </span>
+      );
+    }
+
+    return (
+      <span style={{ color: '#d94343', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <FiXCircle /> Unverified
+      </span>
+    );
+  };
+
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const res = await API.get("/user/me", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        const loadedUser = res.data.user;
+        setUser(loadedUser);
+        setApplicationStatus(loadedUser.verification_status || "unverified");
+
+        if (loadedUser.documents) {
+          setHistory([{
+            id: loadedUser.id,
+            type: loadedUser.documents.type || 'N/A',
+            documentName: loadedUser.documents.document?.name || 'Uploaded document',
+            provider: loadedUser.documents.paymentProvider || 'N/A',
+            paymentNumber: loadedUser.documents.paymentContact || 'N/A',
+            status: loadedUser.verification_status || 'unverified',
+            amount: 'UGX 50,000'
+          }]);
+        }
+      } catch (err) {
+        console.error('Failed to load user history', err);
+      }
+    };
+
+    loadCurrentUser();
+  }, []);
+
+  const pageCount = Math.max(1, Math.ceil(history.length / rowsPerPage));
+  const displayedHistory = history.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
+  return (
+    <div className="register-page">
+      <div className="register-content">
+        <div className="register-card">
+          <h2>Apply for Donor Verification</h2>
+
+          <label style={{ textAlign: 'left', width: '100%', marginBottom: 6 }}>Type</label>
+          <select value={vendorType} onChange={(e) => setVendorType(e.target.value)}>
+            <option value="institution">Institution (Hotel / Restaurant)</option>
+            <option value="individual">Individual (Vendor)</option>
+          </select>
+
+          <label style={{ textAlign: 'left', width: '100%', marginTop: 16 }}>Upload Document</label>
+          <input type="file" onChange={handleFile} />
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
+            <button type="button" className="btn-secondary" onClick={openPaymentModal}>
+              Pay UGX 50,000
+            </button>
+            <button type="button" className="btn-primary" onClick={submitApplication} disabled={loading}>
+              {loading ? 'Submitting...' : 'Submit Application'}
+            </button>
+          </div>
+        </div>
+
+          <div className="register-card">
+          <h3>Application history</h3>
+          <p style={{ marginTop: 6, marginBottom: 18, fontSize: 13, color: '#666' }}>
+            Review your submitted verification application and current status here.
+          </p>
+          <table className="history-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Document</th>
+                <th>Provider</th>
+                <th>Phone</th>
+                <th>Status</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayedHistory.length > 0 ? (
+                displayedHistory.map((item, index) => (
+                  <tr key={`${item.id}-${index}`}>
+                    <td>{item.type}</td>
+                    <td>{item.documentName}</td>
+                    <td>{item.provider}</td>
+                    <td>{item.paymentNumber}</td>
+                    <td>{renderVerificationStatus(item.status)}</td>
+                    <td>{item.amount}</td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} style={{ padding: '16px 8px', textAlign: 'center' }}>
+                    No application history found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          <div className="pagination-container">
+            <button
+              type="button"
+              className="pagination-button"
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </button>
+            <span className="pagination-info">Page {page} of {pageCount}</span>
+            <button
+              type="button"
+              className="pagination-button"
+              onClick={() => setPage((prev) => Math.min(pageCount, prev + 1))}
+              disabled={page === pageCount}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {showPaymentModal && (
+        <div className="payment-modal">
+          <div className="payment-modal-card">
+            <h3>Complete Payment</h3>
+            <div className="payment-modal-body">
+              <label>Service provider</label>
+              <select
+                className="payment-modal-input"
+                value={paymentProvider}
+                onChange={(e) => setPaymentProvider(e.target.value)}
+              >
+                <option value="MTN">MTN</option>
+                <option value="Airtel">Airtel</option>
+              </select>
+
+              <label>Phone number</label>
+              <input
+                className="payment-modal-input"
+                type="tel"
+                value={paymentNumber}
+                onChange={(e) => setPaymentNumber(e.target.value)}
+                placeholder="e.g. 0777123456"
+              />
+
+              <label>Amount</label>
+              <input
+                className="payment-modal-input"
+                type="text"
+                value="UGX 50,000"
+                readOnly
+              />
+
+              <div className="payment-modal-actions">
+                <button type="button" className="btn-secondary" onClick={closePaymentModal}>
+                  Cancel
+                </button>
+                <button type="button" className="btn-primary" onClick={confirmPayment}>
+                  Confirm Payment
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default DonorVerification;

@@ -1,0 +1,136 @@
+/* PAGE WRAPPER */
+.recipient-dashboard {
+  min-height: 100vh;
+  background: #f8faf8;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 20px;
+}
+
+/* CARD */
+.recipient-card {
+  width: 100%;
+  max-width: 520px;
+
+  background: white;
+  padding: 30px;
+
+  border-radius: 14px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+
+  text-align: center;
+}
+
+/* TITLE */
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2e7d32;
+
+  margin-bottom: 10px;
+}
+
+/* WELCOME TEXT */
+.welcome {
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.welcome span {
+  font-weight: 600;
+  color: #2e7d32;
+}
+
+/* SUBTITLE */
+.subtitle {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+/* DIVIDER */
+hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 20px 0;
+}
+
+/* ACTIONS */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* PRIMARY BUTTON */
+.btn-primary {
+  padding: 12px;
+
+  background: #2e7d32;
+  color: white;
+
+  border: none;
+  border-radius: 8px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  background: #256428;
+}
+
+/* SECONDARY BUTTON */
+.btn-secondary {
+  padding: 12px;
+
+  background: white;
+  color: #2e7d32;
+
+  border: 1px solid #2e7d32;
+  border-radius: 8px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #2e7d32;
+  color: white;
+}
+
+/* RESPONSIVE */
+@media (max-width: 600px) {
+  .recipient-card {
+    padding: 20px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+}
+/* ICONS INSIDE BUTTONS */
+.btn-icon {
+  margin-right: 8px;
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+/* make buttons align icon + text nicely */
+.btn-primary,
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
