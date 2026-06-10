@@ -1,158 +1,134 @@
-/* FULL PAGE */
 .login-page {
   display: flex;
   min-height: 100vh;
+  background: var(--surface);
 }
 
-/* LEFT PANEL (BRAND) */
 .login-left {
   flex: 1;
-  background: linear-gradient(135deg, #1b5e20, #2e7d32);
-
-  color: white;
-
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
-
   padding: 60px;
+  color: white;
+  background: linear-gradient(135deg, var(--green-dark), var(--green));
 }
 
 .login-logo {
   width: 80px;
   height: 80px;
   margin-bottom: 20px;
-  background: white;
-  border-radius: 12px;
   padding: 10px;
+  border-radius: 12px;
+  background: white;
 }
 
 .login-left h1 {
-  font-size: 34px;
   margin-bottom: 16px;
+  font-size: 34px;
 }
 
 .login-left p {
+  max-width: 400px;
+  margin: 0;
   font-size: 15px;
   line-height: 1.6;
-  max-width: 400px;
-  opacity: 0.9;
+  opacity: 0.95;
 }
 
-/* MISSION TAGS */
 .login-mission {
-  margin-top: 30px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-top: 30px;
   font-size: 14px;
-  opacity: 0.9;
 }
 
-/* MISSION ITEMS (NEW SAFE STRUCTURE) */
 .mission-item {
   display: flex;
   align-items: center;
   gap: 10px;
-
   font-size: 14px;
-  opacity: 0.9;
 }
 
-/* ICON STYLE */
 .mission-icon {
-  font-size: 18px;
-  color: #c8e6c9;
   flex-shrink: 0;
+  color: var(--green-light);
+  font-size: 18px;
 }
 
-/* RIGHT PANEL */
 .login-right {
   flex: 1;
-
   display: flex;
   justify-content: center;
   align-items: center;
-
-  background: #f8faf8;
   padding: 20px;
+  background: var(--surface);
 }
 
-/* CARD */
 .login-card {
   width: 100%;
-  max-width: 380px;
-
-  background: #ffffff;
-  padding: 32px;
-
-  border-radius: 14px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-
+  max-width: 400px;
+  padding: 34px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: white;
+  box-shadow: 0 18px 36px var(--shadow);
   text-align: center;
 }
 
-/* TITLE */
 .login-card h2 {
-  margin-bottom: 24px;
+  margin: 0 0 24px;
   font-size: 22px;
   font-weight: 600;
-  color: #2e7d32;
+  color: var(--green);
 }
 
-/* INPUTS */
 .login-card input {
   width: 100%;
   padding: 12px 14px;
   margin-bottom: 14px;
-
-  border: 1px solid #e5e5e5;
-  border-radius: 8px;
-
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: white;
+  color: var(--green-dark);
   font-size: 14px;
   outline: none;
-
-  transition: 0.2s;
+  transition: 0.2s ease;
 }
 
 .login-card input:focus {
-  border-color: #2e7d32;
+  border-color: var(--green);
   box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
 }
 
-/* BUTTON */
 .login-card button {
   width: 100%;
   padding: 12px;
-
-  background: #2e7d32;
-  color: white;
-
   border: none;
-  border-radius: 8px;
-
+  border-radius: 10px;
+  background: var(--green);
+  color: white;
   font-size: 15px;
   font-weight: 600;
-
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.2s ease;
 }
 
 .login-card button:hover {
-  background: #256428;
+  background: var(--green-dark);
 }
 
-/* TEXT */
 .login-card p {
   margin-top: 16px;
   font-size: 13px;
-  color: #555;
+  color: var(--green-dark);
 }
 
 .login-card a {
-  color: #2e7d32;
-  font-weight: 500;
+  color: var(--green);
+  font-weight: 600;
   text-decoration: none;
 }
 
@@ -160,15 +136,14 @@
   text-decoration: underline;
 }
 
-/* RESPONSIVE */
 @media (max-width: 768px) {
   .login-page {
     flex-direction: column;
   }
 
   .login-left {
-    padding: 40px;
-    text-align: center;
     align-items: center;
+    padding: 40px 24px;
+    text-align: center;
   }
 }

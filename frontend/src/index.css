@@ -1,0 +1,27 @@
+:root {
+	--green-dark: #1b5e20;
+	--green: #2e7d32;
+	--green-light: #c8e6c9;
+	--surface: #ffffff;
+	--surface-alt: #f6fbf6;
+	--text: #1b5e20;
+	--muted: #2e7d32;
+	--border: rgba(46, 125, 50, 0.18);
+	--shadow: rgba(46, 125, 50, 0.12);
+}
+
+html,
+body,
+#root {
+	min-height: 100%;
+}
+
+body {
+	margin: 0;
+	background: var(--surface);
+	color: var(--text);
+}
+
+a {
+	color: inherit;
+}

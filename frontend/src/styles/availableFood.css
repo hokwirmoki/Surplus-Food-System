@@ -1,7 +1,7 @@
 /* PAGE */
 .available-page {
   padding: 20px;
-  background: #f8faf8;
+  background: var(--surface);
   min-height: 100vh;
 }
 
@@ -9,13 +9,13 @@
 .page-title {
   font-size: 24px;
   font-weight: 600;
-  color: #2e7d32;
+  color: var(--green);
   margin-bottom: 20px;
 }
 
 /* EMPTY STATE */
 .empty-text {
-  color: #777;
+  color: var(--green-dark);
 }
 
 /* GRID */
@@ -31,7 +31,8 @@
   padding: 16px;
 
   border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 18px var(--shadow);
 
   display: flex;
   flex-direction: column;
@@ -44,14 +45,14 @@
   align-items: center;
   gap: 8px;
 
-  color: #2e7d32;
+  color: var(--green);
   font-weight: 600;
 }
 
 /* TEXT */
 .meta {
   font-size: 14px;
-  color: #333;
+  color: var(--green-dark);
 }
 
 .location,
@@ -65,7 +66,7 @@
 
 /* ICONS */
 .icon {
-  color: #2e7d32;
+  color: var(--green);
 }
 
 .icon.small {
@@ -74,7 +75,7 @@
 
 /* TIME LEFT */
 .time-left {
-  color: #1976d2;
+  color: var(--green-dark);
   font-weight: 500;
 }
 
@@ -86,20 +87,20 @@
 
 .claim-details label {
   font-size: 13px;
-  color: #555;
+  color: var(--green-dark);
 }
 
 .payment-summary {
   padding: 10px 12px;
   border-radius: 10px;
-  background: #e8f5e9;
-  border: 1px solid #c8e6c9;
-  color: #2e7d32;
+  background: white;
+  border: 1px solid var(--border);
+  color: var(--green);
   font-weight: 600;
 }
 
 .payment-summary.modal-value {
-  background: #f1f8f3;
+  background: var(--surface-alt);
 }
 
 .payment-modal {
@@ -109,7 +110,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(46, 125, 50, 0.35);
   padding: 20px;
 }
 
@@ -118,17 +119,18 @@
   background: white;
   border-radius: 24px;
   padding: 26px;
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.16);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 70px var(--shadow);
 }
 
 .payment-modal-header h3 {
   margin: 0;
-  color: #163a20;
+  color: var(--green-dark);
 }
 
 .payment-modal-header p {
   margin: 10px 0 0;
-  color: #5a6f64;
+  color: var(--green-dark);
   line-height: 1.6;
 }
 
@@ -145,7 +147,7 @@
 }
 
 .payment-modal-field label {
-  color: #556668;
+  color: var(--green-dark);
   font-size: 13px;
 }
 
@@ -153,8 +155,9 @@
   width: 100%;
   padding: 10px 12px;
   border-radius: 12px;
-  border: 1px solid #dfe6e0;
+  border: 1px solid var(--border);
   font-size: 14px;
+  color: var(--green-dark);
 }
 
 .payment-modal-actions {
@@ -193,22 +196,24 @@
 
 /* MAP BUTTON */
 .map-btn {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: white;
+  color: var(--green);
+  border: 1px solid var(--border);
 }
 
 .map-btn:hover {
-  background: #bbdefb;
+  background: var(--surface-alt);
 }
 
 /* CLAIM BUTTON */
 .claim-btn {
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: white;
+  color: var(--green);
+  border: 1px solid var(--border);
 }
 
 .claim-btn:hover {
-  background: #c8e6c9;
+  background: var(--surface-alt);
 }
 
 .verified-badge {
@@ -217,8 +222,8 @@
   gap: 6px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: white;
+  color: var(--green);
   font-size: 13px;
   font-weight: 600;
 }
@@ -231,7 +236,8 @@
 .claim-input-group input {
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid #e0e0e0;
+  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 14px;
+  color: var(--green-dark);
 }

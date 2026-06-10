@@ -1,7 +1,7 @@
 /* PAGE WRAPPER */
 .dashboard-container {
   min-height: 100vh;
-  background: #f8faf8;
+  background: var(--surface);
 
   display: flex;
   justify-content: center;
@@ -19,7 +19,8 @@
   padding: 30px;
 
   border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 25px var(--shadow);
 
   text-align: center;
 }
@@ -28,7 +29,7 @@
 .dashboard-title {
   font-size: 24px;
   font-weight: 600;
-  color: #2e7d32;
+  color: var(--green);
 
   margin-bottom: 10px;
 }
@@ -36,20 +37,20 @@
 /* WELCOME TEXT */
 .welcome-text {
   font-size: 16px;
-  color: #333;
+  color: var(--green-dark);
 
   margin-bottom: 8px;
 }
 
 .welcome-text span {
   font-weight: 600;
-  color: #2e7d32;
+  color: var(--green);
 }
 
 /* SUBTITLE */
 .subtitle {
   font-size: 13px;
-  color: #666;
+  color: var(--green-dark);
 
   margin-bottom: 20px;
 }
@@ -57,7 +58,7 @@
 /* DIVIDER */
 hr {
   border: none;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border);
   margin: 20px 0;
 }
 
@@ -72,7 +73,7 @@ hr {
 .btn-primary {
   padding: 12px;
 
-  background: #2e7d32;
+  background: var(--green);
   color: white;
 
   border: none;
@@ -86,7 +87,7 @@ hr {
 }
 
 .btn-primary:hover {
-  background: #256428;
+  background: var(--green-dark);
 }
 
 /* SECONDARY BUTTON */
@@ -94,9 +95,9 @@ hr {
   padding: 12px;
 
   background: white;
-  color: #2e7d32;
+  color: var(--green);
 
-  border: 1px solid #2e7d32;
+  border: 1px solid var(--border);
   border-radius: 8px;
 
   font-size: 15px;
@@ -107,7 +108,7 @@ hr {
 }
 
 .btn-secondary:hover {
-  background: #2e7d32;
+  background: var(--green);
   color: white;
 }
 

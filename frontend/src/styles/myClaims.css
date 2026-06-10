@@ -1,7 +1,7 @@
 /* PAGE */
 .claims-page {
   padding: 20px;
-  background: #f8faf8;
+  background: var(--surface);
   min-height: 100vh;
 }
 
@@ -9,13 +9,13 @@
 .title {
   font-size: 24px;
   font-weight: 600;
-  color: #2e7d32;
+  color: var(--green);
   margin-bottom: 20px;
 }
 
 /* EMPTY STATE */
 .empty {
-  color: #777;
+  color: var(--green-dark);
 }
 
 /* GRID */
@@ -31,7 +31,8 @@
   padding: 16px;
 
   border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 18px var(--shadow);
 
   display: flex;
   flex-direction: column;
@@ -44,14 +45,14 @@
   align-items: center;
   gap: 8px;
 
-  color: #2e7d32;
+  color: var(--green);
   font-weight: 600;
 }
 
 /* TEXT */
 .meta {
   font-size: 14px;
-  color: #333;
+  color: var(--green-dark);
 }
 
 /* LOCATION + TIME */
@@ -66,7 +67,7 @@
 
 /* ICONS */
 .icon {
-  color: #2e7d32;
+  color: var(--green);
 }
 
 .icon.small {
