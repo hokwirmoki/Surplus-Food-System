@@ -7,9 +7,93 @@ function toTimeRange(hour) {
   return `${format(startHour)} – ${format(endHour)}`;
 }
 
-function normalize(value, maxValue) {
-  if (!maxValue) return 0;
-  return value / maxValue;
+function getWindowStartHour(date) {
+  return Math.floor(date.getHours() / 3) * 3;
+}
+
+function getDelayHours(createdAt, claimedAt) {
+  const start = new Date(createdAt).getTime();
+  const end = claimedAt ? new Date(claimedAt).getTime() : Date.now();
+  const diffHours = (end - start) / (1000 * 60 * 60);
+
+  if (!Number.isFinite(diffHours) || diffHours < 0) {
+    return 0;
+  }
+
+  return diffHours;
+}
+
+function buildTimingRecommendation(historyRows) {
+  if (!historyRows.length) {
+    return {
+      bestPostingWindow: "11:00 – 14:00",
+      windowInsights: []
+    };
+  }
+
+  const windowStats = new Map();
+
+  for (const row of historyRows) {
+    const createdAt = new Date(row.created_at);
+    const claimedAt = row.claimed_at ? new Date(row.claimed_at) : null;
+    const isClaimed = Boolean(claimedAt);
+    const isDiscounted = Boolean(row.is_discounted);
+    const windowLabel = toTimeRange(getWindowStartHour(createdAt));
+    const delayHours = getDelayHours(createdAt, claimedAt);
+
+    if (!windowStats.has(windowLabel)) {
+      windowStats.set(windowLabel, {
+        window: windowLabel,
+        totalPosts: 0,
+        claimedPosts: 0,
+        discountedPosts: 0,
+        discountedClaims: 0,
+        totalDelayHours: 0,
+        claimedDelayHours: 0
+      });
+    }
+
+    const stats = windowStats.get(windowLabel);
+    stats.totalPosts += 1;
+    stats.totalDelayHours += delayHours;
+
+    if (isClaimed) {
+      stats.claimedPosts += 1;
+      stats.claimedDelayHours += delayHours;
+    }
+
+    if (isDiscounted) {
+      stats.discountedPosts += 1;
+      if (isClaimed) {
+        stats.discountedClaims += 1;
+      }
+    }
+  }
+
+  const insights = Array.from(windowStats.values()).map((stats) => {
+    const claimRate = stats.totalPosts ? stats.claimedPosts / stats.totalPosts : 0;
+    const discountRate = stats.discountedPosts ? stats.discountedClaims / stats.discountedPosts : 0;
+    const averageClaimDelay = stats.claimedPosts
+      ? stats.claimedDelayHours / stats.claimedPosts
+      : stats.totalDelayHours / stats.totalPosts;
+
+    const score = (claimRate * 100) + (discountRate * 25) - averageClaimDelay - ((stats.totalPosts - stats.claimedPosts) * 4);
+
+    return {
+      window: stats.window,
+      score: Number(score.toFixed(2)),
+      totalPosts: stats.totalPosts,
+      claimedPosts: stats.claimedPosts,
+      discountedPosts: stats.discountedPosts,
+      discountedClaims: stats.discountedClaims,
+      averageClaimDelayHours: Number(averageClaimDelay.toFixed(2))
+    };
+  }).sort((left, right) => right.score - left.score || right.claimedPosts - left.claimedPosts);
+
+  return {
+    bestPostingWindow: insights[0]?.window || "11:00 – 14:00",
+    windowInsights: insights
+  };
 }
 
 exports.getDonorAnalytics = async (req, res) => {
@@ -69,6 +153,7 @@ exports.getDonorAnalytics = async (req, res) => {
            + COALESCE(cb.claimed_qty, 0)
          ) AS quantity,
          f.status,
+         f.is_discounted,
          f.created_at,
          cb.claimed_at
        FROM food_items f
@@ -83,9 +168,7 @@ exports.getDonorAnalytics = async (req, res) => {
       totalClaimed: Number(totalClaimed.rows[0].total),
       peopleHelped: Number(peopleHelped.rows[0].count),
       history: history.rows,
-      predictive: {
-        bestPostingWindow: "11:00 – 14:00"
-      }
+      predictive: buildTimingRecommendation(history.rows)
     });
 
   } catch (err) {
