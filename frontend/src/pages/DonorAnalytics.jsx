@@ -80,12 +80,12 @@ function DonorAnalytics() {
       <div className="stats-grid">
 
         <div className="stat-card">
-          <h3>Total Donated</h3>
+          <h3>Total Donated Plates</h3>
           <h2>{data.totalDonated}</h2>
         </div>
 
         <div className="stat-card">
-          <h3>Total Claimed</h3>
+          <h3>Total Plates Claimed</h3>
           <h2>{data.totalClaimed}</h2>
         </div>
 
@@ -121,7 +121,13 @@ function DonorAnalytics() {
           </thead>
 
           <tbody>
-            {paginatedHistory.map((item, index) => {
+            {paginatedHistory.length === 0 ? (
+              <tr>
+                <td colSpan="5" style={{ textAlign: "center" }}>
+                  No donation history found for this donor.
+                </td>
+              </tr>
+            ) : paginatedHistory.map((item, index) => {
               const status = item.status?.toLowerCase();
 
               return (
