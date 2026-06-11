@@ -127,6 +127,36 @@
   color: var(--primary-dark);
 }
 
+.predictive-section {
+  margin-top: 22px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  padding: 28px;
+  box-shadow: 0 26px 80px rgba(46, 125, 50, 0.07);
+}
+
+.predictive-section h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--primary-dark);
+}
+
+.predictive-best-window {
+  margin-top: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 24px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.08), rgba(46, 125, 50, 0.03));
+  border: 1px solid var(--border);
+  color: var(--primary-dark);
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
 .bar-row {
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr) 80px;
