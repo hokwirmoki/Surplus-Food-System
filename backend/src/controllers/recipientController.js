@@ -1,6 +1,7 @@
 const db = require("../config/db");
 const updateExpiredFood = require("../../utils/foodExpiryUpdater");
 const { sendWhatsApp } = require("../../utils/notificationService");
+const logActivity = require("../../utils/activityLogger");
 
 
 // ============================
@@ -10,6 +11,14 @@ exports.getAvailableFood = async (req, res) => {
   try {
     // auto-update expired food first
     await updateExpiredFood();
+
+    if (req.user?.id) {
+      logActivity({
+        userId: req.user.id,
+        activityType: "view_available_food",
+        source: "recipient_food_list"
+      });
+    }
 
     const result = await db.query(`
       SELECT f.*, u.name as donor_name, u.verification_status = 'verified' as donor_verified
@@ -115,6 +124,13 @@ exports.claimFood = async (req, res) => {
        VALUES ($1, $2, $3, 'claimed', true)`,
       [food_id, recipient_id, requestedQuantity]
     );
+
+    logActivity({
+      userId: recipient_id,
+      activityType: "claim_food",
+      source: "recipient_claim",
+      metadata: { food_id, quantity: requestedQuantity }
+    });
 
     // ============================
     // CHARGE FEE OR PURCHASE AMOUNT

@@ -1,6 +1,7 @@
 const db = require("../config/db");
 const updateExpiredFood = require("../../utils/foodExpiryUpdater");
 const { sendWhatsApp } = require("../../utils/notificationService");
+const logActivity = require("../../utils/activityLogger");
 
 // ============================
 // POST FOOD
@@ -99,6 +100,12 @@ ${mapLink}
 exports.getPostedFood = async (req, res) => {
   try {
     const donor_id = req.user.id;
+
+    logActivity({
+      userId: donor_id,
+      activityType: "view_posted_food",
+      source: "donor_food_list"
+    });
 
     await updateExpiredFood();
 

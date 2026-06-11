@@ -25,6 +25,17 @@ async function migrate() {
             )
         `);
 
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS user_activity (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id),
+                activity_type TEXT NOT NULL,
+                source TEXT,
+                metadata JSONB,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
         // Add columns to food_items
         await db.query(`
             ALTER TABLE food_items 

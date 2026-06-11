@@ -2,6 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require("../config/db");
+const logActivity = require("../../utils/activityLogger");
 
 const { sendWhatsApp } = require("../../utils/notificationService");
 
@@ -148,6 +149,13 @@ exports.login = async (req, res) => {
                 notification_mode: user.notification_mode || "whatsapp",
                 verification_status: user.verification_status
             }
+        });
+
+        logActivity({
+            userId: user.id,
+            activityType: "login",
+            source: "auth",
+            metadata: { role: user.role }
         });
 
     } catch (err) {
