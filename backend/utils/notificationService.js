@@ -7,7 +7,7 @@ const client = twilio(
 
 
 // ==============================
-// WHATSAPP ONLY (ACTIVE)
+// WHATSAPP (ACTIVE)
 // ==============================
 const sendWhatsApp = async (phone, message) => {
   try {

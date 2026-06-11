@@ -4,6 +4,9 @@ const User = require("../models/User");
 // View Impact
 exports.getImpactMetrics = async (req, res) => {
     try {
+        const platesPerKg = 2;
+        const co2ePerKg = 2.5;
+
         // Total users
         const totalUsersResult = await db.query("SELECT COUNT(*) as count FROM users");
         const totalUsers = parseInt(totalUsersResult.rows[0].count);
@@ -12,20 +15,13 @@ exports.getImpactMetrics = async (req, res) => {
         const activeFoodResult = await db.query("SELECT COUNT(*) as count FROM food_items WHERE status = 'available'");
         const activeFoodListings = parseInt(activeFoodResult.rows[0].count);
 
-        // Total food donated (sum of quantities) - strip non-numeric suffixes like 'plates'
-        const totalDonatedResult = await db.query(
-          "SELECT COALESCE(SUM(CAST(NULLIF(regexp_replace(quantity, '[^0-9\\.]', '', 'g'), '') AS numeric)), 0) AS total FROM food_items"
-        );
-        const totalFoodDonated = parseFloat(totalDonatedResult.rows[0].total || 0);
-
-        // Total food claimed
-        const totalClaimedResult = await db.query(
-          "SELECT COALESCE(SUM(CAST(NULLIF(regexp_replace(quantity, '[^0-9\\.]', '', 'g'), '') AS numeric)), 0) AS total FROM food_items WHERE status = 'claimed'"
-        );
-        const totalFoodClaimed = parseFloat(totalClaimedResult.rows[0].total || 0);
-
-        // Meals saved (assume 1 meal per kg or something, but use quantity as meals)
-        const mealsSaved = totalFoodClaimed;
+            // Total food donated comes from successful claims, where 1 quantity = 1 plate
+                const totalClaimedResult = await db.query(
+                    "SELECT COALESCE(SUM(quantity), 0) AS total FROM claims WHERE status IN ('claimed', 'picked_up')"
+                );
+                const totalFoodClaimedPlates = Number(totalClaimedResult.rows[0].total || 0);
+            const totalFoodClaimedKg = totalFoodClaimedPlates / platesPerKg;
+            const totalFoodDonatedKg = totalFoodClaimedKg;
 
         // Total people healed (unique recipients who claimed)
         const peopleHealedResult = await db.query("SELECT COUNT(DISTINCT recipient_id) as count FROM claims");
@@ -36,14 +32,13 @@ exports.getImpactMetrics = async (req, res) => {
         const verifiedDonors = parseInt(verifiedDonorsResult.rows[0].count);
 
         // CO₂ saved
-        const co2Saved = totalFoodClaimed * 2.5;
+        const co2Saved = totalFoodDonatedKg * co2ePerKg;
 
         res.json({
             totalUsers,
             activeFoodListings,
-            mealsSaved,
-            totalFoodDonated,
-            totalFoodClaimed,
+            totalFoodDonatedKg,
+            totalFoodClaimedPlates,
             totalPeopleHealed,
             verifiedDonors,
             co2Saved

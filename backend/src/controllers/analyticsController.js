@@ -16,16 +16,31 @@ exports.getDonorAnalytics = async (req, res) => {
   try {
     const donor_id = req.user.id;
 
+    const activityTableExistsResult = await db.query(
+      "SELECT to_regclass('public.user_activity') AS exists"
+    );
+    const hasUserActivityTable = Boolean(activityTableExistsResult.rows[0]?.exists);
+
     // ---------------- TOTAL DONATED ----------------
     const totalDonated = await db.query(
-      `SELECT COUNT(*) FROM food_items WHERE donor_id = $1`,
+      `WITH claimed_by_food AS (
+         SELECT food_id, COALESCE(SUM(quantity), 0) AS claimed_qty
+         FROM claims
+         GROUP BY food_id
+       )
+       SELECT COALESCE(SUM(COALESCE(f.quantity, 0) + COALESCE(c.claimed_qty, 0)), 0) AS total
+       FROM food_items f
+       LEFT JOIN claimed_by_food c ON c.food_id = f.id
+       WHERE f.donor_id = $1`,
       [donor_id]
     );
 
     // ---------------- TOTAL CLAIMED ----------------
     const totalClaimed = await db.query(
-      `SELECT COUNT(*) FROM food_items 
-       WHERE donor_id = $1 AND status = 'claimed'`,
+      `SELECT COALESCE(SUM(c.quantity), 0) AS total
+       FROM claims c
+       JOIN food_items f ON f.id = c.food_id
+       WHERE f.donor_id = $1`,
       [donor_id]
     );
 
@@ -72,6 +87,8 @@ exports.getDonorAnalytics = async (req, res) => {
            COUNT(DISTINCT user_id) AS active_users
          FROM user_activity
          GROUP BY EXTRACT(HOUR FROM created_at)
+       ), empty_activity_stats AS (
+         SELECT NULL::int AS activity_hour, 0::bigint AS activity_events, 0::bigint AS active_users
        )
        SELECT
          hours.hour,
@@ -82,9 +99,13 @@ exports.getDonorAnalytics = async (req, res) => {
          COALESCE(as2.active_users, 0) AS active_users
        FROM generate_series(0, 23) AS hours(hour)
        LEFT JOIN claim_stats cs ON cs.posting_hour = hours.hour
-       LEFT JOIN activity_stats as2 ON as2.activity_hour = hours.hour
+       LEFT JOIN (
+         SELECT * FROM activity_stats
+         UNION ALL
+         SELECT * FROM empty_activity_stats WHERE NOT $2
+       ) as2 ON as2.activity_hour = hours.hour
        ORDER BY hours.hour`,
-      [donor_id]
+      [donor_id, hasUserActivityTable]
     );
 
     const maxClaimed = Math.max(...predictiveRows.rows.map((row) => Number(row.claimed_count) || 0), 0);
@@ -143,9 +164,8 @@ exports.getDonorAnalytics = async (req, res) => {
       : "11:00 – 14:00";
 
     res.json({
-      // 🔥 FIX: convert COUNT strings → numbers
-      totalDonated: Number(totalDonated.rows[0].count),
-      totalClaimed: Number(totalClaimed.rows[0].count),
+      totalDonated: Number(totalDonated.rows[0].total),
+      totalClaimed: Number(totalClaimed.rows[0].total),
       peopleHelped: Number(peopleHelped.rows[0].count),
       history: history.rows,
       predictive: {
