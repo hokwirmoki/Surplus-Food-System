@@ -16,7 +16,7 @@ function DonorAnalytics() {
     totalClaimed: 0,
     peopleHelped: 0,
     history: [],
-    predictive: { suggestedPostingHours: [] }
+    predictive: { bestPostingWindow: "11:00 – 14:00" }
   });
 
   // FIX: use 1-based pagination (cleaner UI)
@@ -39,7 +39,7 @@ function DonorAnalytics() {
         totalClaimed: 0,
         peopleHelped: 0,
         history: [],
-        predictive: { suggestedPostingHours: [] }
+        predictive: { bestPostingWindow: "11:00 – 14:00" }
       });
 
       // RESET PAGE AFTER FETCH (VERY IMPORTANT)
@@ -69,6 +69,7 @@ function DonorAnalytics() {
   );
 
   const totalPages = Math.ceil(safeHistory.length / pageSize);
+  const bestPostingWindow = data?.predictive?.bestPostingWindow || "11:00 – 14:00";
 
   return (
     <div className="analytics-container">
@@ -97,29 +98,10 @@ function DonorAnalytics() {
 
       {/* PREDICTIVE ANALYTICS */}
       <div className="predictive-section">
-        <h3>Predictive Food Demand Analytics</h3>
-        <p>Suggested times to post food based on past claim patterns:</p>
-
-        {data.predictive.suggestedPostingHours?.length ? (
-          <div className="predictive-list">
-            {data.predictive.suggestedPostingHours.map((hour, index) => (
-              <div key={index} className="predictive-item">
-                <div>
-                  <strong>{hour.hour}:00</strong>
-                  <span>{hour.claims} claim{hour.claims === 1 ? "" : "s"}</span>
-                </div>
-                <div className="predictive-bar">
-                  <div
-                    className="predictive-fill"
-                    style={{ width: `${Math.min(hour.claims * 15, 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="empty-state">No predictive data available yet. Post more food to start building demand analytics.</p>
-        )}
+        <h3>Best Posting Time</h3>
+        <div className="predictive-best-window">
+          <strong>{bestPostingWindow}</strong>
+        </div>
       </div>
 
       {/* TABLE */}
