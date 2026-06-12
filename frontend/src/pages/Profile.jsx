@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import API from "../services/api";
 import { toast } from "react-toastify";
 import { FaCheckCircle } from "react-icons/fa";
 import "../styles/profile.css";
@@ -26,11 +26,7 @@ function Profile() {
       if (!token) return;
 
       try {
-        const res = await axios.get("http://localhost:5000/api/user/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await API.get("/user/me");
 
         const currentUser = res.data.user;
         setUser(currentUser);
@@ -84,15 +80,7 @@ function Profile() {
         payload.location = form.location.trim() || undefined;
       }
 
-      const res = await axios.put(
-        "http://localhost:5000/api/user/update",
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const res = await API.put("/user/update", payload);
 
       const updatedUser = { ...user, ...res.data.user };
       localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -109,13 +97,11 @@ function Profile() {
     if (!window.confirm("Are you sure you want to delete your account?")) return;
 
     try {
-      await axios.delete("http://localhost:5000/api/auth/delete-account", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await API.delete("/auth/delete-account");
 
       localStorage.clear();
       window.location.href = "/";
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete account");
     }
   };

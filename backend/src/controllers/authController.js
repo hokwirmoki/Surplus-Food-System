@@ -6,7 +6,7 @@ const logActivity = require("../../utils/activityLogger");
 
 const { sendWhatsApp } = require("../../utils/notificationService");
 
-const JWT_SECRET = "secret123";
+const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 
 // ========================
 // REGISTER (WITH DB OTP)

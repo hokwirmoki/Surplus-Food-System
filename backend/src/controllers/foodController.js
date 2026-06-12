@@ -21,6 +21,16 @@ exports.postFood = async (req, res) => {
       });
     }
 
+    const numericQuantity = Number.parseInt(String(quantity).replace(/[^0-9]/g, ""), 10);
+
+    if (!food_type || !String(food_type).trim()) {
+      return res.status(400).json({ message: "Food type is required." });
+    }
+
+    if (!Number.isFinite(numericQuantity) || numericQuantity <= 0) {
+      return res.status(400).json({ message: "Quantity must be a positive number." });
+    }
+
     if (is_discounted && !price) {
       return res.status(400).json({
         message: "Discounted food must include a price."
@@ -29,17 +39,19 @@ exports.postFood = async (req, res) => {
 
     const food = await db.query(
       `INSERT INTO food_items
-      (donor_id, food_type, quantity, location, expiry_time, status, is_discounted, discount_price)
-      VALUES ($1, $2, $3, $4, $5, 'available', $6, $7)
+      (donor_id, food_type, quantity, location, expiry_time, status, is_discounted, discount_price, latitude, longitude)
+      VALUES ($1, $2, $3, $4, $5, 'available', $6, $7, $8, $9)
       RETURNING *`,
       [
         donor_id,
-        food_type,
-        quantity,
+        food_type.trim(),
+        numericQuantity,
         location,
         expiry_time,
         is_discounted || false,
-        price || null
+        price || null,
+        latitude || null,
+        longitude || null
       ]
     );
 

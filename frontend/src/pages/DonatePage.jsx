@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useCallback, useEffect, useState } from "react";
+import API from "../services/api";
 import { toast } from "react-toastify";
 import {
   FaCheckCircle,
@@ -11,7 +11,6 @@ import "../styles/donatePage.css";
 import LeafletLocationPicker from "../components/LeafletMapPicker";
 
 function DonatePage() {
-  const token = localStorage.getItem("token");
   const urlParams = new URLSearchParams(window.location.search);
   const isDiscounted = urlParams.get('discounted') === 'true';
 
@@ -55,14 +54,14 @@ function DonatePage() {
     return true;
   };
 
-  const handleMapSelect = (data) => {
+  const handleMapSelect = useCallback((data) => {
     setForm((prev) => ({
       ...prev,
       lat: data.lat,
       lng: data.lng,
       location: data.location
     }));
-  };
+  }, []);
 
   const formatDate = (date) => {
     if (!date) return "No expiry";
@@ -84,11 +83,7 @@ function DonatePage() {
         longitude: form.lng
       };
 
-      await axios.post(
-        "http://localhost:5000/api/food/post",
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await API.post("/food/post", payload);
 
       toast.success("Food posted successfully");
 
@@ -103,17 +98,14 @@ function DonatePage() {
       });
 
       fetchFoods();
-    } catch (err) {
+    } catch {
       toast.error("Failed to post food");
     }
   };
 
-  const fetchFoods = async () => {
+  const fetchFoods = useCallback(async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/food/posted",
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await API.get("/food/posted");
 
       const filtered = res.data.filter((food) =>
         Boolean(food.is_discounted) === isDiscounted
@@ -121,14 +113,15 @@ function DonatePage() {
 
       setFoods(filtered);
       setCurrentPage(1);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load foods");
     }
-  };
+  }, [isDiscounted]);
 
   useEffect(() => {
-    fetchFoods();
-  }, []);
+    const timer = window.setTimeout(fetchFoods, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchFoods]);
 
   /* PAGINATION LOGIC */
   const indexOfLast = currentPage * itemsPerPage;

@@ -80,7 +80,7 @@ export default function LeafletLocationPicker({ onSelect }) {
       lng: position.lng,
       location: address
     });
-  }, [position, address]);
+  }, [position, address, onSelect]);
 
   return (
     <div>

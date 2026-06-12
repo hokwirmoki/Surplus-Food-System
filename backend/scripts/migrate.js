@@ -42,7 +42,9 @@ async function migrate() {
             ADD COLUMN IF NOT EXISTS is_discounted BOOLEAN DEFAULT FALSE,
             ADD COLUMN IF NOT EXISTS discount_price DECIMAL(10,2),
             ADD COLUMN IF NOT EXISTS claimed_by INTEGER REFERENCES users(id),
-            ADD COLUMN IF NOT EXISTS pickup_status TEXT DEFAULT 'not_picked'
+            ADD COLUMN IF NOT EXISTS pickup_status TEXT DEFAULT 'not_picked',
+            ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
+            ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION
         `);
 
         // Create claims table
@@ -62,6 +64,37 @@ async function migrate() {
         await db.query(`
             ALTER TABLE claims
             ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_food_items_donor_status_created
+            ON food_items (donor_id, status, created_at DESC)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_food_items_available_expiry
+            ON food_items (status, expiry_time)
+            WHERE status = 'available'
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_claims_food_id
+            ON claims (food_id)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_claims_recipient_created
+            ON claims (recipient_id, created_at DESC)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_transactions_food_id
+            ON transactions (food_id)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_user_activity_user_created
+            ON user_activity (user_id, created_at DESC)
         `);
 
         console.log('Migration completed');

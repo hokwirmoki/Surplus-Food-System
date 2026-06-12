@@ -1,54 +1,39 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../services/api";
 import { toast } from "react-toastify";
 
 import { FaBoxOpen, FaMapMarkerAlt, FaClock } from "react-icons/fa";
 import "../styles/myClaims.css";
 
 function MyClaims() {
-  const token = localStorage.getItem("token");
   const [claims, setClaims] = useState([]);
 
   const fetchClaims = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/recipient/claims",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const res = await API.get("/recipient/claims");
 
       setClaims(res.data);
 
-    } catch (err) {
-      console.error("Error fetching claims:", err);
+    } catch {
+      console.error("Error fetching claims");
     }
   };
 
   const confirmPickup = async (food_id) => {
     try {
-      await axios.post(
-        "http://localhost:5000/api/recipient/confirm-pickup",
-        { food_id },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      await API.post("/recipient/confirm-pickup", { food_id });
 
       toast.success("Pickup confirmed!");
       fetchClaims(); // Refresh
 
-    } catch (err) {
+    } catch {
       toast.error("Failed to confirm pickup");
     }
   };
 
   useEffect(() => {
-    fetchClaims();
+    const timer = window.setTimeout(fetchClaims, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   return (

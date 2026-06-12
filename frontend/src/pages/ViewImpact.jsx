@@ -7,20 +7,21 @@ function ViewImpact() {
   const [metrics, setMetrics] = useState({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchMetrics();
-  }, []);
-
   const fetchMetrics = async () => {
     try {
       const res = await API.get("/admin/impact");
       setMetrics(res.data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load impact metrics");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timer = window.setTimeout(fetchMetrics, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   if (loading) return <div className="loading-state">Loading impact metrics…</div>;
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar.jsx";
@@ -22,12 +22,10 @@ import ViewFinancials from "./pages/ViewFinancials.jsx";
 import HomeRedirect from "./pages/HomeRedirect.jsx";
 
 function App() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
+  const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
-    setUser(storedUser ? JSON.parse(storedUser) : null);
-  }, []);
+    return storedUser ? JSON.parse(storedUser) : null;
+  });
 
   return (
   <div className="app-layout">

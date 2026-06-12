@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import API from "../services/api";
 import { toast } from "react-toastify";
 
 import {
@@ -12,8 +12,6 @@ import {
 import "../styles/availableFood.css";
 
 function AvailableFood() {
-  const token = localStorage.getItem("token");
-
   const [foods, setFoods] = useState([]);
   const [claimQuantities, setClaimQuantities] = useState({});
   const [selectedFood, setSelectedFood] = useState(null);
@@ -24,14 +22,7 @@ function AvailableFood() {
 
   const fetchFood = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/recipient/available",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await API.get("/recipient/available");
 
       const now = new Date();
 
@@ -60,7 +51,7 @@ function AvailableFood() {
 
       previousIds.current = newIds;
       setFoods(validFoods);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load food");
     }
   };
@@ -100,18 +91,13 @@ function AvailableFood() {
         return;
       }
 
-      await axios.post(
-        "http://localhost:5000/api/recipient/claim",
+      await API.post(
+        "/recipient/claim",
         {
           food_id: food.id,
           quantity: requestedQuantity,
           paymentProvider,
           paymentNumber,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
 
@@ -162,9 +148,12 @@ function AvailableFood() {
   };
 
   useEffect(() => {
-    fetchFood();
+    const timer = window.setTimeout(fetchFood, 0);
     const interval = setInterval(fetchFood, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      window.clearTimeout(timer);
+      clearInterval(interval);
+    };
   }, []);
 
   return (

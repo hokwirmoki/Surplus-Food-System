@@ -4,7 +4,7 @@ function toTimeRange(hour) {
   const startHour = ((hour % 24) + 24) % 24;
   const endHour = (startHour + 3) % 24;
   const format = (value) => String(value).padStart(2, "0") + ":00";
-  return `${format(startHour)} – ${format(endHour)}`;
+  return `${format(startHour)} - ${format(endHour)}`;
 }
 
 function getWindowStartHour(date) {
@@ -26,7 +26,7 @@ function getDelayHours(createdAt, claimedAt) {
 function buildTimingRecommendation(historyRows) {
   if (!historyRows.length) {
     return {
-      bestPostingWindow: "11:00 – 14:00",
+      bestPostingWindow: "11:00 - 14:00",
       windowInsights: []
     };
   }
@@ -91,7 +91,7 @@ function buildTimingRecommendation(historyRows) {
   }).sort((left, right) => right.score - left.score || right.claimedPosts - left.claimedPosts);
 
   return {
-    bestPostingWindow: insights[0]?.window || "11:00 – 14:00",
+    bestPostingWindow: insights[0]?.window || "11:00 - 14:00",
     windowInsights: insights
   };
 }

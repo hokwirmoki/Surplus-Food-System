@@ -7,20 +7,21 @@ function ViewFinancials() {
   const [financials, setFinancials] = useState({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchFinancials();
-  }, []);
-
   const fetchFinancials = async () => {
     try {
       const res = await API.get("/admin/financials");
       setFinancials(res.data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load financials");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timer = window.setTimeout(fetchFinancials, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   if (loading) return <div>Loading...</div>;
 

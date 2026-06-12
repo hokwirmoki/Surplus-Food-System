@@ -7,15 +7,12 @@ import "../styles/register.css";
 
 function DonorVerification() {
   const navigate = useNavigate();
-  const storedUser = JSON.parse(localStorage.getItem("user")) || {};
-  const [user, setUser] = useState(storedUser);
   const [vendorType, setVendorType] = useState("individual");
   const [fileData, setFileData] = useState(null);
   const [payContact, setPayContact] = useState("");
   const [paid, setPaid] = useState(false);
   const [paymentProvider, setPaymentProvider] = useState("MTN");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [applicationStatus, setApplicationStatus] = useState(storedUser.verification_status || "unverified");
   const [loading, setLoading] = useState(false);
   const [paymentNumber, setPaymentNumber] = useState("");
   const [history, setHistory] = useState([]);
@@ -76,8 +73,6 @@ function DonorVerification() {
 
       const updatedUser = res.data.user;
       localStorage.setItem("user", JSON.stringify(updatedUser));
-      setUser(updatedUser);
-      setApplicationStatus(updatedUser.verification_status || "pending");
       setHistory([{
         id: updatedUser.id,
         type: updatedUser.documents?.type || vendorType,
@@ -95,30 +90,6 @@ function DonorVerification() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const renderStatus = (status) => {
-    if (status === "paid" || status === "verified") {
-      return (
-        <span style={{ color: '#1d9d74', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <FiCheckCircle /> {status === 'paid' ? 'Paid' : 'Verified'}
-        </span>
-      );
-    }
-
-    if (status === "pending") {
-      return (
-        <span style={{ color: '#f0a500', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <FiClock /> Pending
-        </span>
-      );
-    }
-
-    return (
-      <span style={{ color: '#d94343', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-        <FiXCircle /> Not paid
-      </span>
-    );
   };
 
   const renderVerificationStatus = (status) => {
@@ -158,8 +129,6 @@ function DonorVerification() {
         });
 
         const loadedUser = res.data.user;
-        setUser(loadedUser);
-        setApplicationStatus(loadedUser.verification_status || "unverified");
 
         if (loadedUser.documents) {
           setHistory([{

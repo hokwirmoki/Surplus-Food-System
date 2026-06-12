@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../services/api";
 import {
   FaCheckCircle,
   FaTimesCircle,
@@ -9,14 +9,12 @@ import {
 import "../styles/donorAnalytics.css";
 
 function DonorAnalytics() {
-  const token = localStorage.getItem("token");
-
   const [data, setData] = useState({
     totalDonated: 0,
     totalClaimed: 0,
     peopleHelped: 0,
     history: [],
-    predictive: { bestPostingWindow: "11:00 – 14:00" }
+    predictive: { bestPostingWindow: "11:00 - 14:00" }
   });
 
   // FIX: use 1-based pagination (cleaner UI)
@@ -25,21 +23,14 @@ function DonorAnalytics() {
 
   const fetchAnalytics = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/analytics/donor",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      );
+      const res = await API.get("/analytics/donor");
 
       setData(res.data || {
         totalDonated: 0,
         totalClaimed: 0,
         peopleHelped: 0,
         history: [],
-        predictive: { bestPostingWindow: "11:00 – 14:00" }
+        predictive: { bestPostingWindow: "11:00 - 14:00" }
       });
 
       // RESET PAGE AFTER FETCH (VERY IMPORTANT)
@@ -51,7 +42,8 @@ function DonorAnalytics() {
   };
 
   useEffect(() => {
-    fetchAnalytics();
+    const timer = window.setTimeout(fetchAnalytics, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const formatDate = (date) => {
@@ -69,7 +61,7 @@ function DonorAnalytics() {
   );
 
   const totalPages = Math.ceil(safeHistory.length / pageSize);
-  const bestPostingWindow = data?.predictive?.bestPostingWindow || "11:00 – 14:00";
+  const bestPostingWindow = data?.predictive?.bestPostingWindow || "11:00 - 14:00";
 
   return (
     <div className="analytics-container">

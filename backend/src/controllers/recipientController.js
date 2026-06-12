@@ -53,12 +53,20 @@ function deg2rad(deg) {
   return deg * (Math.PI / 180);
 }
 
+function parseQuantity(value) {
+  const parsed = Number.parseInt(String(value).replace(/[^0-9]/g, ""), 10);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
 // ============================
 // CLAIM FOOD (UPDATED WITH DONOR NOTIFICATION)
 // ============================
 exports.claimFood = async (req, res) => {
+  let client;
+  let transactionStarted = false;
+
   try {
+    client = await db.connect();
     const recipient_id = req.user.id;
     const { food_id, quantity, paymentProvider, paymentNumber } = req.body;
 
@@ -75,29 +83,39 @@ exports.claimFood = async (req, res) => {
       return res.status(400).json({ message: "Quantity must be at least 1" });
     }
 
+    await client.query("BEGIN");
+    transactionStarted = true;
+
     // ============================
     // GET FOOD + DONOR INFO
     // ============================
-    const foodResult = await db.query(
+    const foodResult = await client.query(
       `SELECT f.*, u.phone, u.notification_mode, u.name as donor_name
        FROM food_items f
        JOIN users u ON f.donor_id = u.id
-       WHERE f.id = $1`,
+       WHERE f.id = $1
+       FOR UPDATE OF f`,
       [food_id]
     );
 
     if (foodResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      transactionStarted = false;
       return res.status(404).json({ message: "Food not found" });
     }
 
     const food = foodResult.rows[0];
 
     if (food.status !== "available") {
+      await client.query("ROLLBACK");
+      transactionStarted = false;
       return res.status(400).json({ message: "Food already claimed or expired" });
     }
 
-    const availableQuantity = Number(food.quantity) || 0;
+    const availableQuantity = parseQuantity(food.quantity);
     if (requestedQuantity > availableQuantity) {
+      await client.query("ROLLBACK");
+      transactionStarted = false;
       return res.status(400).json({ message: `Only ${availableQuantity} unit(s) available` });
     }
 
@@ -110,32 +128,29 @@ exports.claimFood = async (req, res) => {
     // ============================
     // UPDATE FOOD STATUS / QUANTITY
     // ============================
-    await db.query(
-      `UPDATE food_items SET quantity = $1, status = $2 WHERE id = $3`,
-      [remainingQuantity, newStatus, food_id]
+    await client.query(
+      `UPDATE food_items
+       SET quantity = $1::varchar,
+           status = $2::varchar,
+           claimed_by = CASE WHEN $2::varchar = 'claimed' THEN $3 ELSE claimed_by END
+       WHERE id = $4`,
+      [remainingQuantity, newStatus, recipient_id, food_id]
     );
 
     // ============================
     // SAVE CLAIM RECORD
     // ============================
-    await db.query(
+    await client.query(
       `INSERT INTO claims
        (food_id, recipient_id, quantity, status, reservation_fee_paid)
        VALUES ($1, $2, $3, 'claimed', true)`,
       [food_id, recipient_id, requestedQuantity]
     );
 
-    logActivity({
-      userId: recipient_id,
-      activityType: "claim_food",
-      source: "recipient_claim",
-      metadata: { food_id, quantity: requestedQuantity }
-    });
-
     // ============================
     // CHARGE FEE OR PURCHASE AMOUNT
     // ============================
-    await db.query(
+    await client.query(
       `INSERT INTO transactions (type, amount, user_id, food_id)
        VALUES ($1, $2, $3, $4)`,
       [transactionType, paymentAmount, recipient_id, food_id]
@@ -143,7 +158,7 @@ exports.claimFood = async (req, res) => {
 
     if (isDiscounted) {
       const commission = Number((paymentAmount * 0.05).toFixed(2));
-      await db.query(
+      await client.query(
         `INSERT INTO transactions (type, amount, user_id, food_id)
          VALUES ('commission', $1, $2, $3)`,
         [commission, recipient_id, food_id]
@@ -153,12 +168,22 @@ exports.claimFood = async (req, res) => {
     // ============================
     // GET RECIPIENT INFO
     // ============================
-    const recipientRes = await db.query(
+    const recipientRes = await client.query(
       `SELECT name FROM users WHERE id = $1`,
       [recipient_id]
     );
 
     const recipient = recipientRes.rows[0];
+
+    await client.query("COMMIT");
+    transactionStarted = false;
+
+    logActivity({
+      userId: recipient_id,
+      activityType: "claim_food",
+      source: "recipient_claim",
+      metadata: { food_id, quantity: requestedQuantity }
+    });
 
     // ============================
     // 📲 NOTIFY DONOR (WHATSAPP ONLY)
@@ -182,8 +207,22 @@ Location: ${food.location}
     res.json({ message: "Food claimed successfully. Please confirm pickup upon collection." });
 
   } catch (err) {
+    if (transactionStarted && client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackErr) {
+        console.error("CLAIM ROLLBACK ERROR:", rollbackErr.message);
+      }
+    }
     console.error("CLAIM ERROR:", err);
-    res.status(500).json({ error: "Claim failed" });
+    res.status(500).json({
+      message: "Claim failed",
+      error: process.env.NODE_ENV === "production" ? undefined : err.message
+    });
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 };
 

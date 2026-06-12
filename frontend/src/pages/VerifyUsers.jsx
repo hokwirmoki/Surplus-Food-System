@@ -9,35 +9,31 @@ function VerifyUsers() {
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await API.get("/admin/users", {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const res = await API.get("/admin/users");
       setUsers(res.data);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    const timer = window.setTimeout(fetchUsers, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const handleVerify = async (userId, status) => {
     try {
-      const token = localStorage.getItem("token");
       await API.put(
         "/admin/verify",
-        { userId, status },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { userId, status }
       );
       toast.success(`User ${status}`);
       fetchUsers(); // Refresh
-    } catch (err) {
+    } catch {
       toast.error("Failed to update verification");
     }
   };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import API from "../services/api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 
@@ -23,13 +23,10 @@ function OtpVerify() {
     try {
       setLoading(true);
 
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/verify-otp",
-        {
-          userId,
-          otp
-        }
-      );
+      const res = await API.post("/auth/verify-otp", {
+        userId,
+        otp
+      });
 
       toast.success(res.data.message);
 

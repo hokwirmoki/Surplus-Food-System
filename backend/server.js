@@ -30,7 +30,7 @@ app.use("/api/analytics", require("./src/routes/analyticsRoutes"));
 const updateExpiredFood = require("./utils/foodExpiryUpdater");
 
 setInterval(() => {
-  updateExpiredFood();
+  updateExpiredFood({ force: true });
 }, 60 * 1000);
 
 // =======================
