@@ -191,6 +191,37 @@
   text-align: right;
 }
 
+.action-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.analytics-table button {
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  background: var(--primary);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 7px 10px;
+}
+
+.analytics-table button:hover {
+  background: var(--primary-dark);
+}
+
+.analytics-table .danger-action {
+  border-color: rgba(180, 35, 24, 0.28);
+  background: #ffffff;
+  color: var(--status-rejected);
+}
+
+.analytics-table .danger-action:hover {
+  background: rgba(180, 35, 24, 0.08);
+}
+
 @media (max-width: 900px) {
   .analytics-header {
     flex-direction: column;

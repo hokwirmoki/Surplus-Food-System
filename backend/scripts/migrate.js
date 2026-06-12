@@ -10,7 +10,19 @@ async function migrate() {
             ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION,
             ADD COLUMN IF NOT EXISTS notification_mode TEXT DEFAULT 'whatsapp',
             ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'unverified',
-            ADD COLUMN IF NOT EXISTS documents JSONB
+            ADD COLUMN IF NOT EXISTS documents JSONB,
+            ADD COLUMN IF NOT EXISTS verification_approved_at TIMESTAMP,
+            ADD COLUMN IF NOT EXISTS verification_expires_at TIMESTAMP
+        `);
+
+        await db.query(`
+            UPDATE users
+            SET
+                verification_approved_at = COALESCE(verification_approved_at, NOW()),
+                verification_expires_at = COALESCE(verification_expires_at, NOW() + INTERVAL '1 year')
+            WHERE role = 'donor'
+              AND verification_status = 'verified'
+              AND verification_expires_at IS NULL
         `);
 
         // Create transactions table
@@ -95,6 +107,11 @@ async function migrate() {
         await db.query(`
             CREATE INDEX IF NOT EXISTS idx_user_activity_user_created
             ON user_activity (user_id, created_at DESC)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_users_verification_expiry
+            ON users (role, verification_status, verification_expires_at)
         `);
 
         console.log('Migration completed');

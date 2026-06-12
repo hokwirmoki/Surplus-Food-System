@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
+import { FaCheckCircle, FaClock, FaTimesCircle } from "react-icons/fa";
 import "../styles/donorAnalytics.css";
 
 function VerifyUsers() {
@@ -38,6 +39,69 @@ function VerifyUsers() {
     }
   };
 
+  const renderVerificationStatus = (status) => {
+    const normalizedStatus = status?.toLowerCase() || "unverified";
+
+    if (normalizedStatus === "verified") {
+      return (
+        <span className="status verified">
+          <FaCheckCircle className="status-icon status-icon--verified" />
+          Verified
+        </span>
+      );
+    }
+
+    if (normalizedStatus === "pending") {
+      return (
+        <span className="status pending">
+          <FaClock className="status-icon status-icon--pending" />
+          Pending
+        </span>
+      );
+    }
+
+    return (
+      <span className={`status ${normalizedStatus}`}>
+        <FaTimesCircle className="status-icon status-icon--rejected" />
+        {status || "Unverified"}
+      </span>
+    );
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "-";
+    return new Date(date).toLocaleDateString();
+  };
+
+  const renderActions = (user) => {
+    const status = user.verification_status?.toLowerCase() || "unverified";
+
+    if (status === "pending") {
+      return (
+        <div className="action-buttons">
+          <button onClick={() => handleVerify(user.id, "verified")}>Approve</button>
+          <button className="danger-action" onClick={() => handleVerify(user.id, "rejected")}>
+            Reject
+          </button>
+        </div>
+      );
+    }
+
+    if (status === "verified") {
+      return (
+        <button className="danger-action" onClick={() => handleVerify(user.id, "rejected")}>
+          Remove badge
+        </button>
+      );
+    }
+
+    return (
+      <button onClick={() => handleVerify(user.id, "verified")}>
+        Approve
+      </button>
+    );
+  };
+
   if (loading) return <div>Loading...</div>;
 
   const totalPages = Math.ceil(users.length / pageSize);
@@ -59,6 +123,7 @@ function VerifyUsers() {
               <th>Payment Provider</th>
               <th>Payment Contact</th>
               <th>Status</th>
+              <th>Expires</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -89,17 +154,9 @@ function VerifyUsers() {
                   </td>
                   <td>{document.paymentProvider || "-"}</td>
                   <td>{document.paymentContact || "-"}</td>
-                  <td>{user.verification_status}</td>
-                  <td>
-                    {user.verification_status === "pending" ? (
-                      <div className="action-buttons">
-                        <button onClick={() => handleVerify(user.id, "verified")}>Approve</button>
-                        <button onClick={() => handleVerify(user.id, "rejected")}>Reject</button>
-                      </div>
-                    ) : (
-                      <button onClick={() => handleVerify(user.id, "rejected")}>Disapprove</button>
-                    )}
-                  </td>
+                  <td>{renderVerificationStatus(user.verification_status)}</td>
+                  <td>{formatDate(user.verification_expires_at)}</td>
+                  <td>{renderActions(user)}</td>
                 </tr>
               );
             })}

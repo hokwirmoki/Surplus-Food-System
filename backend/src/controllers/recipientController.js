@@ -2,6 +2,7 @@ const db = require("../config/db");
 const updateExpiredFood = require("../../utils/foodExpiryUpdater");
 const { sendWhatsApp } = require("../../utils/notificationService");
 const logActivity = require("../../utils/activityLogger");
+const expireVerificationBadges = require("../../utils/verificationExpiry");
 
 
 // ============================
@@ -11,6 +12,7 @@ exports.getAvailableFood = async (req, res) => {
   try {
     // auto-update expired food first
     await updateExpiredFood();
+    await expireVerificationBadges();
 
     if (req.user?.id) {
       logActivity({
@@ -21,7 +23,14 @@ exports.getAvailableFood = async (req, res) => {
     }
 
     const result = await db.query(`
-      SELECT f.*, u.name as donor_name, u.verification_status = 'verified' as donor_verified
+      SELECT
+        f.*,
+        u.name as donor_name,
+        (
+          u.verification_status = 'verified'
+          AND u.verification_expires_at IS NOT NULL
+          AND u.verification_expires_at > NOW()
+        ) as donor_verified
       FROM food_items f
       JOIN users u ON f.donor_id = u.id
       WHERE f.status = 'available'

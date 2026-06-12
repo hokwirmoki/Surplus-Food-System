@@ -85,26 +85,6 @@ th, td {
   border-bottom: 1px solid var(--border);
 }
 
-/* STATUS COLORS */
-.status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-}
-
-.status.available {
-  color: var(--green);
-}
-
-.status.claimed {
-  color: var(--green-dark);
-}
-
-.status.expired {
-  color: var(--green-dark);
-}
-
 .icon {
   font-size: 14px;
 }

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
+import { formatMoney } from "../utils/formatMoney";
 import "../styles/donorAnalytics.css"; // Reuse styling
 
 function ViewFinancials() {
@@ -28,6 +29,7 @@ function ViewFinancials() {
   const summaryData = [
     { label: "Reservation Fees", value: financials.reservationFees || 0 },
     { label: "Verification Fees", value: financials.verificationFees || 0 },
+    { label: "Discounted Food Sales", value: financials.discountedFoodSales || 0 },
     { label: "Commissions", value: financials.commissions || 0 }
   ];
 
@@ -39,7 +41,7 @@ function ViewFinancials() {
         {summaryData.map((item) => (
           <div key={item.label} className="metric-card">
             <h3>{item.label} (UGX)</h3>
-            <p>{item.value}</p>
+            <p>{formatMoney(item.value)}</p>
           </div>
         ))}
       </div>
@@ -57,7 +59,7 @@ function ViewFinancials() {
             {summaryData.map((item) => (
               <tr key={item.label}>
                 <td>{item.label}</td>
-                <td>{item.value}</td>
+                <td>{formatMoney(item.value)}</td>
               </tr>
             ))}
           </tbody>

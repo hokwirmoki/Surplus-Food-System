@@ -8,6 +8,14 @@
 	--muted: #2e7d32;
 	--border: rgba(46, 125, 50, 0.18);
 	--shadow: rgba(46, 125, 50, 0.12);
+	--status-claimed: #2e7d32;
+	--status-verified: #2e7d32;
+	--status-available: #1565c0;
+	--status-expired: #c62828;
+	--status-rejected: #b42318;
+	--status-pending: #b7791f;
+	--status-picked-up: #00796b;
+	--status-other: #5f6b7a;
 }
 
 html,
@@ -24,4 +32,82 @@ body {
 
 a {
 	color: inherit;
+}
+
+.status {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 600;
+	text-transform: capitalize;
+}
+
+.status.claimed,
+.status.verified {
+	color: var(--status-claimed);
+}
+
+.status.available {
+	color: var(--status-available);
+}
+
+.status.expired {
+	color: var(--status-expired);
+}
+
+.status.pending {
+	color: var(--status-pending);
+}
+
+.status.rejected,
+.status.unverified {
+	color: var(--status-rejected);
+}
+
+.status.picked_up,
+.status.picked-up,
+.status.pickedup {
+	color: var(--status-picked-up);
+}
+
+.status.other,
+.status.unknown {
+	color: var(--status-other);
+}
+
+.status-icon,
+.status .icon {
+	color: currentColor;
+	flex-shrink: 0;
+}
+
+.status-icon--claimed,
+.status-icon--verified {
+	color: var(--status-claimed);
+}
+
+.status-icon--available {
+	color: var(--status-available);
+}
+
+.status-icon--expired {
+	color: var(--status-expired);
+}
+
+.status-icon--pending {
+	color: var(--status-pending);
+}
+
+.status-icon--rejected,
+.status-icon--unverified {
+	color: var(--status-rejected);
+}
+
+.status-icon--picked-up {
+	color: var(--status-picked-up);
+}
+
+.status-icon--other {
+	color: var(--status-other);
 }

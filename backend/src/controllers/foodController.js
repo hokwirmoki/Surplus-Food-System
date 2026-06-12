@@ -55,16 +55,6 @@ exports.postFood = async (req, res) => {
       ]
     );
 
-    // If discounted, calculate commission 5%
-    if (is_discounted && price) {
-      const commission = price * 0.05;
-      await db.query(
-        `INSERT INTO transactions (type, amount, user_id, food_id)
-         VALUES ('commission', $1, $2, $3)`,
-        [commission, donor_id, food.rows[0].id]
-      );
-    }
-
     // ==================================================
     // 📲 WHATSAPP NOTIFICATION ONLY (NO EMAIL SYSTEM)
     // ==================================================

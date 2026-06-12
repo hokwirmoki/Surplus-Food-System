@@ -1,5 +1,6 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
+const expireVerificationBadges = require("../../utils/verificationExpiry");
 
 exports.updateUser = async (req, res) => {
   try {
@@ -88,9 +89,26 @@ exports.updateUser = async (req, res) => {
 
 exports.getCurrentUser = async (req, res) => {
   try {
+    await expireVerificationBadges();
+
     const user_id = req.user.id;
     const result = await db.query(
-      `SELECT id, name, email, phone, role, location, latitude, longitude, notification_mode, verification_status, documents FROM users WHERE id = $1`,
+      `SELECT
+         id,
+         name,
+         email,
+         phone,
+         role,
+         location,
+         latitude,
+         longitude,
+         notification_mode,
+         verification_status,
+         verification_approved_at,
+         verification_expires_at,
+         documents
+       FROM users
+       WHERE id = $1`,
       [user_id]
     );
 
@@ -110,9 +128,26 @@ exports.getCurrentUser = async (req, res) => {
 // ============================
 exports.applyForVerification = async (req, res) => {
   try {
+    await expireVerificationBadges();
+
     const user_id = req.user.id;
 
     const { vendorType, document, paymentProvider, paymentContact, paid } = req.body;
+
+    const currentUser = await db.query(
+      `SELECT verification_status, verification_expires_at FROM users WHERE id = $1`,
+      [user_id]
+    );
+
+    if (
+      currentUser.rows[0]?.verification_status === 'verified' &&
+      currentUser.rows[0]?.verification_expires_at &&
+      new Date(currentUser.rows[0].verification_expires_at) > new Date()
+    ) {
+      return res.status(400).json({
+        message: "Your donor badge is still active. You can apply again after it expires."
+      });
+    }
 
     // store documents as JSON with type, payment info, and uploaded file info
     const documents = {
@@ -123,7 +158,13 @@ exports.applyForVerification = async (req, res) => {
     };
 
     const result = await db.query(
-      `UPDATE users SET verification_status = 'pending', documents = $1 WHERE id = $2 RETURNING id, name, email, phone, role, verification_status, documents`,
+      `UPDATE users
+       SET verification_status = 'pending',
+           documents = $1,
+           verification_approved_at = NULL,
+           verification_expires_at = NULL
+       WHERE id = $2
+       RETURNING id, name, email, phone, role, verification_status, verification_approved_at, verification_expires_at, documents`,
       [documents, user_id]
     );
 

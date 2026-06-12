@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
+import { formatUGX } from "../utils/formatMoney";
 
 import {
   FaClock,
@@ -208,8 +209,8 @@ function AvailableFood() {
               <label>Payment</label>
               <div className="payment-summary">
                 {f.is_discounted
-                  ? `Pay & Buy - ${f.discount_price || 0} UGX per unit`
-                  : "Reservation fee - 1000 UGX"}
+                  ? `Pay & Buy - ${formatUGX(f.discount_price || 0)} per unit`
+                  : `Reservation fee - ${formatUGX(1000)}`}
               </div>
             </div>
 
@@ -285,8 +286,8 @@ function AvailableFood() {
                 <label>Amount</label>
                 <div className="payment-summary modal-value">
                   {selectedFood.is_discounted
-                    ? `${(selectedFood.discount_price || 0) * (parseInt(claimQuantities[selectedFood.id] || "1", 10) || 1)} UGX`
-                    : "1000 UGX"}
+                    ? formatUGX((selectedFood.discount_price || 0) * (parseInt(claimQuantities[selectedFood.id] || "1", 10) || 1))
+                    : formatUGX(1000)}
                 </div>
               </div>
             </div>

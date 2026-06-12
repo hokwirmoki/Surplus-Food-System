@@ -23,7 +23,7 @@ function ViewImpact() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  if (loading) return <div className="loading-state">Loading impact metrics…</div>;
+  if (loading) return <div className="loading-state">Loading impact metrics...</div>;
 
   return (
     <div className="analytics-container">
@@ -31,7 +31,7 @@ function ViewImpact() {
         <div>
           <h2>System Impact Metrics</h2>
           <p className="analytics-subtitle">
-            A summary of claimed plates, donated food, and carbon savings using the 2 plates = 1 kg rule.
+            A summary of claimed plates, redistributed food, and carbon savings using the 2 plates = 1 kg rule.
           </p>
         </div>
       </div>
@@ -48,7 +48,7 @@ function ViewImpact() {
         </div>
 
         <div className="metric-card">
-          <h3>Total Food Donated (kg)</h3>
+          <h3>Food Redistributed (kg)</h3>
           <p>{metrics.totalFoodDonatedKg || 0}</p>
         </div>
 
@@ -59,7 +59,7 @@ function ViewImpact() {
 
         <div className="metric-card">
           <h3>Total People Helped</h3>
-          <p>{metrics.totalPeopleHealed || 0}</p>
+          <p>{metrics.totalPeopleHelped || metrics.totalPeopleHealed || 0}</p>
         </div>
 
         <div className="metric-card">
@@ -68,7 +68,7 @@ function ViewImpact() {
         </div>
 
         <div className="metric-card">
-          <h3>CO₂ Saved (kg)</h3>
+          <h3>CO2 Saved (kg)</h3>
           <p>{metrics.co2Saved || 0}</p>
         </div>
       </div>

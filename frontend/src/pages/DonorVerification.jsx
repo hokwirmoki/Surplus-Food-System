@@ -3,6 +3,7 @@ import API from "../services/api";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi";
+import { formatUGX } from "../utils/formatMoney";
 import "../styles/register.css";
 
 function DonorVerification() {
@@ -48,7 +49,7 @@ function DonorVerification() {
 
   const submitApplication = async () => {
     if (!fileData) return toast.error("Please upload a verification document");
-    if (!paid) return toast.error("Please pay UGX 50,000 before submitting your application");
+    if (!paid) return toast.error(`Please pay ${formatUGX(50000)} before submitting your application`);
 
     const token = localStorage.getItem("token");
     if (!token) return toast.error("You must be logged in to submit your application");
@@ -80,7 +81,7 @@ function DonorVerification() {
         provider: updatedUser.documents?.paymentProvider || paymentProvider,
         paymentNumber: updatedUser.documents?.paymentContact || payContact,
         status: updatedUser.verification_status || 'pending',
-        amount: 'UGX 50,000'
+        amount: formatUGX(50000)
       }]);
 
       toast.success("Verification application submitted");
@@ -95,23 +96,23 @@ function DonorVerification() {
   const renderVerificationStatus = (status) => {
     if (status === "verified") {
       return (
-        <span style={{ color: '#1d9d74', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <FiCheckCircle /> Verified
+        <span className="status verified">
+          <FiCheckCircle className="status-icon status-icon--verified" /> Verified
         </span>
       );
     }
 
     if (status === "pending") {
       return (
-        <span style={{ color: '#f0a500', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <FiClock /> Pending
+        <span className="status pending">
+          <FiClock className="status-icon status-icon--pending" /> Pending
         </span>
       );
     }
 
     return (
-      <span style={{ color: '#d94343', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-        <FiXCircle /> Unverified
+      <span className="status unverified">
+        <FiXCircle className="status-icon status-icon--unverified" /> Unverified
       </span>
     );
   };
@@ -138,7 +139,7 @@ function DonorVerification() {
             provider: loadedUser.documents.paymentProvider || 'N/A',
             paymentNumber: loadedUser.documents.paymentContact || 'N/A',
             status: loadedUser.verification_status || 'unverified',
-            amount: 'UGX 50,000'
+            amount: formatUGX(50000)
           }]);
         }
       } catch (err) {
@@ -169,7 +170,7 @@ function DonorVerification() {
 
           <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
             <button type="button" className="btn-secondary" onClick={openPaymentModal}>
-              Pay UGX 50,000
+              Pay {formatUGX(50000)}
             </button>
             <button type="button" className="btn-primary" onClick={submitApplication} disabled={loading}>
               {loading ? 'Submitting...' : 'Submit Application'}
@@ -265,7 +266,7 @@ function DonorVerification() {
               <input
                 className="payment-modal-input"
                 type="text"
-                value="UGX 50,000"
+                value={formatUGX(50000)}
                 readOnly
               />
 

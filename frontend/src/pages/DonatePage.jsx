@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
+import { formatUGX } from "../utils/formatMoney";
 import {
   FaCheckCircle,
-  FaClock,
+  FaInfoCircle,
   FaTimesCircle
 } from "react-icons/fa";
 
@@ -206,7 +207,7 @@ function DonatePage() {
                 <tr key={food.id}>
                   <td>{food.food_type}</td>
                   <td>{food.quantity}</td>
-                  <td>{food.discount_price ? `${food.discount_price} UGX` : 'Free'}</td>
+                  <td>{food.discount_price ? formatUGX(food.discount_price) : 'Free'}</td>
                   <td>{formatDate(food.expiry_time)}</td>
 
                   <td>
@@ -214,21 +215,21 @@ function DonatePage() {
 
                       {food.status?.toLowerCase() === "available" && (
                         <>
-                          <FaCheckCircle className="icon green" />
+                          <FaInfoCircle className="status-icon status-icon--available" />
                           Available
                         </>
                       )}
 
                       {food.status?.toLowerCase() === "claimed" && (
                         <>
-                          <FaClock className="icon blue" />
+                          <FaCheckCircle className="status-icon status-icon--claimed" />
                           Claimed
                         </>
                       )}
 
                       {food.status?.toLowerCase() === "expired" && (
                         <>
-                          <FaTimesCircle className="icon red" />
+                          <FaTimesCircle className="status-icon status-icon--expired" />
                           Expired
                         </>
                       )}

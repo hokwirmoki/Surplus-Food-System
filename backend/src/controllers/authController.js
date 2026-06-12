@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const db = require("../config/db");
 const logActivity = require("../../utils/activityLogger");
+const expireVerificationBadges = require("../../utils/verificationExpiry");
 
 const { sendWhatsApp } = require("../../utils/notificationService");
 
@@ -109,6 +110,8 @@ exports.verifyOtp = async (req, res) => {
 // ========================
 exports.login = async (req, res) => {
     try {
+        await expireVerificationBadges();
+
         const { email, password } = req.body;
 
         const user = await User.findByEmail(email);
@@ -147,7 +150,9 @@ exports.login = async (req, res) => {
                 latitude: user.latitude,
                 longitude: user.longitude,
                 notification_mode: user.notification_mode || "whatsapp",
-                verification_status: user.verification_status
+                verification_status: user.verification_status,
+                verification_approved_at: user.verification_approved_at,
+                verification_expires_at: user.verification_expires_at
             }
         });
 

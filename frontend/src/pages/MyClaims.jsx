@@ -2,11 +2,46 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
 
-import { FaBoxOpen, FaMapMarkerAlt, FaClock } from "react-icons/fa";
+import {
+  FaBoxOpen,
+  FaMapMarkerAlt,
+  FaClock,
+  FaCheckCircle,
+  FaInfoCircle
+} from "react-icons/fa";
 import "../styles/myClaims.css";
 
 function MyClaims() {
   const [claims, setClaims] = useState([]);
+
+  const renderClaimStatus = (status) => {
+    const normalizedStatus = status?.toLowerCase() || "other";
+
+    if (normalizedStatus === "claimed") {
+      return (
+        <span className="status claimed">
+          <FaCheckCircle className="status-icon status-icon--claimed" />
+          Claimed
+        </span>
+      );
+    }
+
+    if (normalizedStatus === "picked_up") {
+      return (
+        <span className="status picked_up">
+          <FaCheckCircle className="status-icon status-icon--picked-up" />
+          Picked up
+        </span>
+      );
+    }
+
+    return (
+      <span className="status other">
+        <FaInfoCircle className="status-icon status-icon--other" />
+        {status || "Unknown"}
+      </span>
+    );
+  };
 
   const fetchClaims = async () => {
     try {
@@ -74,7 +109,7 @@ function MyClaims() {
             </p>
 
             <p className="meta">
-              <strong>Status:</strong> {c.status}
+              <strong>Status:</strong> {renderClaimStatus(c.status)}
             </p>
 
             {c.status === 'claimed' && (

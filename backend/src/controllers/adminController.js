@@ -1,9 +1,14 @@
 const db = require("../config/db");
 const User = require("../models/User");
+const expireVerificationBadges = require("../../utils/verificationExpiry");
+const updateExpiredFood = require("../../utils/foodExpiryUpdater");
 
 // View Impact
 exports.getImpactMetrics = async (req, res) => {
     try {
+        await updateExpiredFood({ force: true });
+        await expireVerificationBadges();
+
         const platesPerKg = 2;
         const co2ePerKg = 2.5;
 
@@ -23,12 +28,20 @@ exports.getImpactMetrics = async (req, res) => {
             const totalFoodClaimedKg = totalFoodClaimedPlates / platesPerKg;
             const totalFoodDonatedKg = totalFoodClaimedKg;
 
-        // Total people healed (unique recipients who claimed)
-        const peopleHealedResult = await db.query("SELECT COUNT(DISTINCT recipient_id) as count FROM claims");
-        const totalPeopleHealed = parseInt(peopleHealedResult.rows[0].count);
+        // Total people helped (unique recipients with successful claims)
+        const peopleHelpedResult = await db.query(
+            "SELECT COUNT(DISTINCT recipient_id) as count FROM claims WHERE status IN ('claimed', 'picked_up')"
+        );
+        const totalPeopleHelped = parseInt(peopleHelpedResult.rows[0].count);
 
         // Verified donors
-        const verifiedDonorsResult = await db.query("SELECT COUNT(*) as count FROM users WHERE role = 'donor' AND is_verified = true");
+        const verifiedDonorsResult = await db.query(`
+            SELECT COUNT(*) as count
+            FROM users
+            WHERE role = 'donor'
+              AND verification_status = 'verified'
+              AND verification_expires_at > NOW()
+        `);
         const verifiedDonors = parseInt(verifiedDonorsResult.rows[0].count);
 
         // CO₂ saved
@@ -39,7 +52,8 @@ exports.getImpactMetrics = async (req, res) => {
             activeFoodListings,
             totalFoodDonatedKg,
             totalFoodClaimedPlates,
-            totalPeopleHealed,
+            totalPeopleHelped,
+            totalPeopleHealed: totalPeopleHelped,
             verifiedDonors,
             co2Saved
         });
@@ -61,6 +75,11 @@ exports.getUsersForVerification = async (req, res) => {
 exports.verifyUser = async (req, res) => {
     try {
         const { userId, status } = req.body;
+
+        if (!['verified', 'rejected'].includes(status)) {
+            return res.status(400).json({ message: "Invalid verification status" });
+        }
+
         const currentUserRes = await db.query(
             `SELECT documents FROM users WHERE id = $1`,
             [userId]
@@ -85,13 +104,18 @@ exports.getFinancials = async (req, res) => {
         const verificationFeesResult = await db.query("SELECT SUM(amount) as total FROM transactions WHERE type = 'verification'");
         const verificationFees = parseFloat(verificationFeesResult.rows[0].total || 0);
 
-        // Commissions
-        const commissionsResult = await db.query("SELECT SUM(amount) as total FROM transactions WHERE type = 'commission'");
-        const commissions = parseFloat(commissionsResult.rows[0].total || 0);
+        // Discounted food purchases
+        const discountedFoodSalesResult = await db.query("SELECT SUM(amount) as total FROM transactions WHERE type = 'purchase'");
+        const discountedFoodSales = parseFloat(discountedFoodSalesResult.rows[0].total || 0);
+
+        // Commission is 5% of successfully claimed discounted food only.
+        // Derive it from purchase transactions so old posting-time commission rows do not inflate reports.
+        const commissions = Number((discountedFoodSales * 0.05).toFixed(2));
 
         res.json({
             reservationFees,
             verificationFees,
+            discountedFoodSales,
             commissions
         });
     } catch (err) {

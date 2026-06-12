@@ -1,5 +1,6 @@
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
+const expireVerificationBadges = require('../../utils/verificationExpiry');
 
 class User {
     static async create({ name, email, password, role, phone, location, latitude, longitude, notification_mode }) {
@@ -27,6 +28,8 @@ class User {
     }
 
     static async findByEmail(email) {
+        await expireVerificationBadges();
+
         const result = await db.query(
             `SELECT * FROM users WHERE email = $1`,
             [email]
@@ -36,6 +39,8 @@ class User {
     }
 
     static async findById(id) {
+        await expireVerificationBadges();
+
         const result = await db.query(
             `SELECT * FROM users WHERE id = $1`,
             [id]
@@ -45,17 +50,59 @@ class User {
     }
 
     static async updateVerificationStatus(id, status, documents) {
-        const result = await db.query(
-            `UPDATE users SET verification_status = $1, documents = $2 WHERE id = $3 RETURNING *`,
-            [status, documents, id]
-        );
+        let result;
+
+        if (status === 'verified') {
+            result = await db.query(
+                `UPDATE users
+                 SET verification_status = 'verified',
+                     documents = $1,
+                     verification_approved_at = NOW(),
+                     verification_expires_at = NOW() + INTERVAL '1 year'
+                 WHERE id = $2
+                 RETURNING *`,
+                [documents, id]
+            );
+        } else {
+            result = await db.query(
+                `UPDATE users
+                 SET verification_status = $1,
+                     documents = $2,
+                     verification_approved_at = NULL,
+                     verification_expires_at = NULL
+                 WHERE id = $3
+                 RETURNING *`,
+                [status, documents, id]
+            );
+        }
 
         return result.rows[0];
     }
 
     static async getAllUsers() {
+        await expireVerificationBadges();
+
         const result = await db.query(
-            `SELECT id, name, email, phone, verification_status, documents FROM users WHERE role = 'donor' AND documents IS NOT NULL`
+            `SELECT
+                id,
+                name,
+                email,
+                phone,
+                verification_status,
+                verification_approved_at,
+                verification_expires_at,
+                documents
+             FROM users
+             WHERE role = 'donor' AND documents IS NOT NULL
+             ORDER BY
+                CASE verification_status
+                  WHEN 'pending' THEN 1
+                  WHEN 'verified' THEN 2
+                  WHEN 'expired' THEN 3
+                  WHEN 'rejected' THEN 4
+                  ELSE 5
+                END,
+                id DESC`
         );
 
         return result.rows;

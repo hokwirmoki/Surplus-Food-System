@@ -21,6 +21,11 @@ function Profile() {
   });
   const [loading, setLoading] = useState(false);
 
+  const formatDate = (date) => {
+    if (!date) return null;
+    return new Date(date).toLocaleDateString();
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       if (!token) return;
@@ -132,7 +137,10 @@ function Profile() {
           )}
           <p><span>Notifications:</span> {user?.notification_mode || "whatsapp"}</p>
           {user?.verification_status === "verified" && (
-            <p><span>Status:</span> Verified donor</p>
+            <>
+              <p><span>Status:</span> Verified donor</p>
+              <p><span>Badge expires:</span> {formatDate(user?.verification_expires_at) || "Not set"}</p>
+            </>
           )}
         </div>
 

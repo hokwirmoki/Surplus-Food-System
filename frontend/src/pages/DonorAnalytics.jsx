@@ -132,15 +132,15 @@ function DonorAnalytics() {
                     <span className={`status ${status}`}>
 
                       {status === "claimed" && (
-                        <FaCheckCircle className="icon green" />
+                        <FaCheckCircle className="status-icon status-icon--claimed" />
                       )}
 
                       {status === "expired" && (
-                        <FaTimesCircle className="icon red" />
+                        <FaTimesCircle className="status-icon status-icon--expired" />
                       )}
 
                       {status === "available" && (
-                        <FaInfoCircle className="icon blue" />
+                        <FaInfoCircle className="status-icon status-icon--available" />
                       )}
 
                       <span style={{ marginLeft: "6px" }}>
