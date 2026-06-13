@@ -79,9 +79,13 @@ function Register() {
 
       const res = await API.post("/auth/register", form);
 
-      toast.success("OTP sent to WhatsApp!");
-
       localStorage.setItem("pendingUserId", res.data.userId);
+
+      if (res.data.otpSent === false) {
+        toast.warn(res.data.message || "Account created, but OTP could not be sent.");
+      } else {
+        toast.success("OTP sent to WhatsApp!");
+      }
 
       navigate("/verify-otp");
 

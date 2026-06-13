@@ -37,6 +37,8 @@ services:
         sync: false
       - key: TWILIO_WHATSAPP
         sync: false
+      - key: DEBUG_NOTIFICATIONS
+        value: "true"
       - key: DEFAULT_COUNTRY_CODE
         value: "+256"
 

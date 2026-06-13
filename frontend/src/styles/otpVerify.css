@@ -127,6 +127,18 @@
   background: var(--green-dark);
 }
 
+.otp-card .secondary-otp-button {
+  margin-top: 10px;
+  background: white;
+  color: var(--green-dark);
+  border: 1px solid var(--border);
+}
+
+.otp-card .secondary-otp-button:hover {
+  background: var(--surface);
+  border-color: var(--green);
+}
+
 /* HINT TEXT */
 .hint {
   margin-top: 14px;

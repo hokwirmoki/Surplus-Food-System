@@ -1,13 +1,18 @@
 const twilio = require("twilio");
 
-const client = twilio(
-  process.env.TWILIO_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
 const INTERNATIONAL_PHONE_REGEX = /^\+[1-9]\d{7,14}$/;
 const UGANDA_LOCAL_PHONE_REGEX = /^0\d{8,9}$/;
 const DEFAULT_COUNTRY_CODE = process.env.DEFAULT_COUNTRY_CODE || "+256";
+
+function getWhatsAppSender() {
+  const sender = String(process.env.TWILIO_WHATSAPP || "").trim();
+
+  if (!sender) {
+    return null;
+  }
+
+  return sender.startsWith("whatsapp:") ? sender : `whatsapp:${sender}`;
+}
 
 function maskPhone(phone) {
   const value = String(phone || "");
@@ -37,17 +42,38 @@ function normalizeWhatsAppPhone(phone) {
 // ==============================
 const sendWhatsApp = async (phone, message) => {
   const normalizedPhone = normalizeWhatsAppPhone(phone);
+  const sender = getWhatsAppSender();
 
   if (!normalizedPhone) {
     if (process.env.DEBUG_NOTIFICATIONS === "true") {
       console.warn(`WhatsApp skipped: invalid phone number "${phone}". Use international format, e.g. +256...`);
     }
-    return false;
+    return {
+      ok: false,
+      error: "Invalid WhatsApp phone number",
+      code: "INVALID_PHONE",
+      to: null,
+    };
+  }
+
+  if (!process.env.TWILIO_SID || !process.env.TWILIO_AUTH_TOKEN || !sender) {
+    console.error("WhatsApp error: Twilio environment variables are not fully configured.");
+    return {
+      ok: false,
+      error: "Twilio environment variables are not fully configured",
+      code: "TWILIO_CONFIG_MISSING",
+      to: normalizedPhone,
+    };
   }
 
   try {
+    const client = twilio(
+      process.env.TWILIO_SID,
+      process.env.TWILIO_AUTH_TOKEN
+    );
+
     const result = await client.messages.create({
-      from: process.env.TWILIO_WHATSAPP,
+      from: sender,
       to: `whatsapp:${normalizedPhone}`,
       body: message
     });

@@ -14,7 +14,31 @@ function OtpVerify() {
   const navigate = useNavigate();
   const userId = localStorage.getItem("pendingUserId");
 
+  const resendOtp = async () => {
+    if (!userId) {
+      toast.error("No pending account found. Please register again.");
+      navigate("/register");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await API.post("/auth/resend-otp", { userId });
+      toast.success(res.data.message || "OTP sent successfully.");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "OTP could not be resent");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const verifyOtp = async () => {
+    if (!userId) {
+      toast.error("No pending account found. Please register again.");
+      navigate("/register");
+      return;
+    }
+
     if (!otp) {
       toast.error("Enter OTP");
       return;
@@ -52,7 +76,7 @@ function OtpVerify() {
         <h1>Verify Your Account</h1>
 
         <p>
-          We’ve sent a one-time password to your WhatsApp number.
+          We have sent a one-time password to your WhatsApp number.
           Enter it below to activate your account.
         </p>
 
@@ -87,6 +111,10 @@ function OtpVerify() {
 
           <button onClick={verifyOtp} disabled={loading}>
             {loading ? "Verifying..." : "Verify OTP"}
+          </button>
+
+          <button type="button" onClick={resendOtp} disabled={loading} className="secondary-otp-button">
+            Resend OTP
           </button>
 
           <p className="hint">

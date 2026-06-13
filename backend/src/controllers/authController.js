@@ -9,6 +9,24 @@ const { sendWhatsApp, normalizeWhatsAppPhone } = require("../../utils/notificati
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 
+async function issueOtp(userId, phone) {
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    await db.query(
+        `UPDATE users
+         SET otp_code = $1, is_verified = false
+         WHERE id = $2`,
+        [otp, userId]
+    );
+
+    const result = await sendWhatsApp(
+        phone,
+        `Your SFS verification OTP is: ${otp}`
+    );
+
+    return result;
+}
+
 // ========================
 // REGISTER (WITH DB OTP)
 // ========================
@@ -41,35 +59,59 @@ exports.register = async (req, res) => {
             notification_mode: 'whatsapp'
         });
 
-        // ========================
-        // OTP GENERATION
-        // ========================
-        const otp = Math.floor(100000 + Math.random() * 900000);
-
-        // SAVE OTP IN DB
-        await db.query(
-            `UPDATE users 
-             SET otp_code = $1, is_verified = false 
-             WHERE id = $2`,
-            [otp, user.id]
-        );
-
-        // SEND OTP VIA WHATSAPP
-        const otpResult = await sendWhatsApp(
-            normalizedPhone,
-            `Your SFS verification OTP is: ${otp}`
-        );
+        const otpResult = await issueOtp(user.id, normalizedPhone);
 
         if (!otpResult.ok) {
-            return res.status(502).json({
-                message: "Account created, but OTP could not be sent. Check the WhatsApp number or Twilio setup."
+            return res.status(201).json({
+                message: "Account created, but OTP could not be sent. Check the WhatsApp number or Twilio setup.",
+                userId: user.id,
+                otpSent: false
             });
         }
 
         res.status(201).json({
             message: "User registered successfully. OTP sent.",
-            userId: user.id
+            userId: user.id,
+            otpSent: true
         });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.resendOtp = async (req, res) => {
+    try {
+        const { userId } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({ message: "User ID is required." });
+        }
+
+        const result = await db.query(
+            `SELECT id, phone, is_verified FROM users WHERE id = $1`,
+            [userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const user = result.rows[0];
+
+        if (user.is_verified) {
+            return res.status(400).json({ message: "Account is already verified." });
+        }
+
+        const otpResult = await issueOtp(user.id, user.phone);
+
+        if (!otpResult.ok) {
+            return res.status(502).json({
+                message: "OTP could not be sent. Check the WhatsApp number or Twilio setup."
+            });
+        }
+
+        return res.json({ message: "OTP sent successfully." });
 
     } catch (err) {
         res.status(500).json({ error: err.message });
