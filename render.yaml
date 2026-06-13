@@ -1,0 +1,54 @@
+databases:
+  - name: surplus-food-system-db
+    plan: free
+    databaseName: sfs_db
+    user: sfs_user
+
+services:
+  - type: web
+    name: surplus-food-system-api
+    runtime: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: UV_THREADPOOL_SIZE
+        value: "16"
+      - key: DB_POOL_MAX
+        value: "20"
+      - key: DB_TOTAL_POOL_MAX
+        value: "20"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: surplus-food-system-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://surplus-food-system.onrender.com
+      - key: TWILIO_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_WHATSAPP
+        sync: false
+      - key: DEFAULT_COUNTRY_CODE
+        value: "+256"
+
+  - type: web
+    name: surplus-food-system
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://surplus-food-system-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
