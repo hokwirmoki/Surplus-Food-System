@@ -1,90 +1,75 @@
-/* PAGE */
 .claims-page {
+  min-height: 100vh;
   padding: 28px;
   background: var(--surface);
-  min-height: 100vh;
 }
 
-/* TITLE */
 .title {
+  margin: 0 0 20px;
+  color: var(--green);
   font-size: 28px;
   font-weight: 600;
-  color: var(--green);
-  margin-bottom: 20px;
 }
 
-/* EMPTY STATE */
 .empty {
   color: var(--green-dark);
 }
 
-/* GRID */
-.claims-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-  gap: 18px;
-}
-
-/* CARD */
-.claim-card {
-  background: white;
-  padding: 18px;
-  min-width: 0;
-
-  border-radius: 12px;
+.claims-table-card {
+  width: 100%;
+  overflow: hidden;
   border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
   box-shadow: 0 6px 18px var(--shadow);
-
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 }
 
-/* HEADER */
-.claim-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-
-  color: var(--green);
-  font-weight: 600;
+.claims-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* TEXT */
-.meta {
-  font-size: 15px;
+.claims-table {
+  width: 100%;
+  min-width: 780px;
+  border-collapse: collapse;
+}
+
+.claims-table th,
+.claims-table td {
+  padding: 13px 14px;
+  border-bottom: 1px solid var(--border);
   color: var(--green-dark);
+  font-size: 14px;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
 }
 
-/* LOCATION + TIME */
-.location,
-.time {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  font-size: 13px;
-}
-
-/* ICONS */
-.icon {
+.claims-table th {
+  background: var(--surface-alt);
   color: var(--green);
+  font-weight: 700;
 }
 
-.icon.small {
-  font-size: 12px;
+.claims-table tr:last-child td {
+  border-bottom: none;
+}
+
+.claims-table tbody tr:hover {
+  background: var(--surface-alt);
 }
 
 .confirm-pickup-btn {
-  width: 100%;
-  min-height: 44px;
-  margin-top: 4px;
+  min-height: 38px;
+  padding: 0 12px;
   border: none;
   border-radius: 10px;
   background: var(--green);
   color: #ffffff;
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   transition: background 0.2s ease, transform 0.2s ease;
 }
@@ -94,8 +79,68 @@
   transform: translateY(-1px);
 }
 
+.table-action {
+  width: auto;
+}
+
+.no-action {
+  color: var(--green-dark);
+  opacity: 0.6;
+}
+
+.claims-pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.claims-pagination button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--green);
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.claims-pagination button:hover:not(:disabled) {
+  background: var(--surface-alt);
+  border-color: rgba(46, 125, 50, 0.34);
+}
+
+.claims-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.claims-pagination span {
+  color: var(--green-dark);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 @media (max-width: 520px) {
   .claims-page {
     padding: 18px;
+  }
+
+  .claims-pagination {
+    justify-content: stretch;
+    flex-wrap: wrap;
+  }
+
+  .claims-pagination span {
+    flex: 1 0 100%;
+    order: -1;
+    text-align: center;
+  }
+
+  .claims-pagination button {
+    flex: 1;
   }
 }

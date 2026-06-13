@@ -3,9 +3,6 @@ import API from "../services/api";
 import { toast } from "react-toastify";
 
 import {
-  FaBoxOpen,
-  FaMapMarkerAlt,
-  FaClock,
   FaCheckCircle,
   FaInfoCircle
 } from "react-icons/fa";
@@ -13,6 +10,8 @@ import "../styles/myClaims.css";
 
 function MyClaims() {
   const [claims, setClaims] = useState([]);
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 10;
 
   const renderClaimStatus = (status) => {
     const normalizedStatus = status?.toLowerCase() || "other";
@@ -48,6 +47,7 @@ function MyClaims() {
       const res = await API.get("/recipient/claims");
 
       setClaims(res.data);
+      setPage(1);
 
     } catch {
       console.error("Error fetching claims");
@@ -71,6 +71,9 @@ function MyClaims() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  const pageCount = Math.max(1, Math.ceil(claims.length / rowsPerPage));
+  const displayedClaims = claims.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+
   return (
     <div className="claims-page">
 
@@ -80,48 +83,68 @@ function MyClaims() {
         <p className="empty">No claims yet</p>
       )}
 
-      <div className="claims-grid">
-
-        {claims.map((c, i) => (
-          <div className="claim-card" key={i}>
-
-            <div className="claim-header">
-              <FaBoxOpen className="icon" />
-              <h3>{c.food_type}</h3>
+      {claims.length > 0 && (
+        <>
+          <div className="claims-table-card">
+            <div className="claims-table-wrap">
+              <table className="claims-table">
+                <thead>
+                  <tr>
+                    <th>Food</th>
+                    <th>Quantity</th>
+                    <th>Location</th>
+                    <th>Claimed At</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayedClaims.map((c, i) => (
+                    <tr key={`${c.food_id}-${c.claimed_at || i}`}>
+                      <td>{c.food_type}</td>
+                      <td>{c.quantity}</td>
+                      <td>{c.location}</td>
+                      <td>
+                        {c.claimed_at
+                          ? new Date(c.claimed_at).toLocaleString()
+                          : "Not available"}
+                      </td>
+                      <td>{renderClaimStatus(c.status)}</td>
+                      <td>
+                        {c.status === "claimed" ? (
+                          <button className="confirm-pickup-btn table-action" onClick={() => confirmPickup(c.food_id)}>
+                            Confirm Pickup
+                          </button>
+                        ) : (
+                          <span className="no-action">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-
-            <p className="meta">
-              <strong>Quantity claimed:</strong> {c.quantity}
-            </p>
-
-            <p className="meta location">
-              <FaMapMarkerAlt className="icon small" />
-              {c.location}
-            </p>
-
-            <p className="meta time">
-              <FaClock className="icon small" />
-
-              <strong>Claimed:</strong>{" "}
-              {c.claimed_at
-                ? new Date(c.claimed_at).toLocaleString()
-                : "Not available"}
-            </p>
-
-            <p className="meta">
-              <strong>Status:</strong> {renderClaimStatus(c.status)}
-            </p>
-
-            {c.status === 'claimed' && (
-              <button className="confirm-pickup-btn" onClick={() => confirmPickup(c.food_id)}>
-                Confirm Pickup
-              </button>
-            )}
-
           </div>
-        ))}
 
-      </div>
+          <div className="claims-pagination">
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </button>
+            <span>Page {page} of {pageCount}</span>
+            <button
+              type="button"
+              onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
+              disabled={page === pageCount}
+            >
+              Next
+            </button>
+          </div>
+        </>
+      )}
 
     </div>
   );
