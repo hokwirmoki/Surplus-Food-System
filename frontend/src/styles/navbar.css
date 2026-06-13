@@ -75,6 +75,7 @@
   position: absolute;
   right: 0;
   top: 48px;
+  z-index: 1001;
 
   background: white;
   border: 1px solid var(--border);
@@ -162,6 +163,38 @@
 
   .navbar-right.active {
     display: flex;
+  }
+
+  .navbar-right .profile-container {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .navbar-right .profile-img {
+    flex: 0 0 auto;
+  }
+
+  .navbar-right .dropdown {
+    position: static;
+    width: 100%;
+    margin-top: 2px;
+    border-radius: 8px;
+    box-shadow: none;
+    border-color: var(--border);
+    background: #ffffff;
+  }
+
+  .navbar-right .dropdown p {
+    width: 100%;
+    min-height: 42px;
+    padding: 11px 12px;
+    color: var(--green-dark);
+  }
+
+  .navbar-right .dropdown .logout {
+    color: #b42318;
   }
 }
 
