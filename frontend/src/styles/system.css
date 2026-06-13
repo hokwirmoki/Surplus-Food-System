@@ -1,0 +1,324 @@
+:root {
+  --green-dark: #17451f;
+  --green: #2d7d3a;
+  --green-light: #dff3e2;
+  --surface: #ffffff;
+  --surface-alt: #f7fbf8;
+  --surface-soft: #fbfdfb;
+  --text: #14351c;
+  --muted: #5f7566;
+  --border: rgba(23, 69, 31, 0.12);
+  --shadow: rgba(23, 69, 31, 0.08);
+  --shadow-strong: rgba(23, 69, 31, 0.14);
+  --focus-ring: rgba(45, 125, 58, 0.18);
+}
+
+.app-layout,
+.app-content,
+.login-page,
+.register-page,
+.profile-page,
+.dashboard-container,
+.available-page,
+.claims-page,
+.donate-page,
+.analytics-container {
+  background: var(--surface-soft);
+}
+
+.navbar {
+  background: rgba(255, 255, 255, 0.88);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(23, 69, 31, 0.04);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.navbar-logo h3,
+.page-title,
+.title,
+.dashboard-title,
+.login-card h2,
+.register-card h2,
+.register-card h3,
+.profile-card h3,
+.donate-card h2,
+.food-table h3,
+.analytics-header h2,
+.analytics-container > h2 {
+  color: var(--green-dark);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.login-left,
+.register-left,
+.profile-left {
+  background: var(--green);
+}
+
+.login-card,
+.register-card,
+.profile-card,
+.dashboard-card,
+.food-card,
+.claim-card,
+.donate-card,
+.food-table,
+.metric-card,
+.stat-card,
+.impact-chart,
+.predictive-section,
+.table-container,
+.payment-modal-card,
+.date-time-panel {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 12px 34px var(--shadow);
+}
+
+.food-card,
+.claim-card,
+.metric-card,
+.stat-card {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.food-card:hover,
+.claim-card:hover,
+.metric-card:hover,
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(45, 125, 58, 0.24);
+  box-shadow: 0 16px 40px var(--shadow-strong);
+}
+
+.metric-card::before,
+.stat-card::before {
+  display: none;
+}
+
+.analytics-container {
+  color: var(--text);
+}
+
+.analytics-header h2 {
+  font-size: clamp(1.8rem, 2.2vw, 2.5rem);
+}
+
+.analytics-subtitle,
+.subtitle,
+.empty-text,
+.empty,
+.loading-state,
+.empty-state,
+.meta,
+.profile-info,
+.welcome-text {
+  color: var(--muted);
+}
+
+.metric-card h3,
+.stat-card h3 {
+  color: var(--muted);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.metric-card p,
+.stat-card h2 {
+  color: var(--green-dark);
+}
+
+input,
+textarea,
+.login-card input,
+.register-card input,
+.register-card select,
+.profile-card input,
+.profile-card select,
+.donate-card input,
+.claim-input-group input,
+.payment-modal-input,
+.date-time-trigger,
+.select-menu-trigger {
+  border-radius: 10px;
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--green-dark);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+input:focus,
+textarea:focus,
+.login-card input:focus,
+.register-card input:focus,
+.register-card select:focus,
+.profile-card input:focus,
+.profile-card select:focus,
+.donate-card input:focus,
+.claim-input-group input:focus,
+.payment-modal-input:focus {
+  border-color: rgba(45, 125, 58, 0.45);
+  box-shadow: 0 0 0 4px var(--focus-ring);
+}
+
+button,
+.btn-primary,
+.btn-secondary,
+.claim-btn,
+.map-btn,
+.confirm-pickup-btn,
+.pagination-button,
+.pagination button,
+.action-buttons button,
+.date-time-actions button,
+.login-card button,
+.register-card button,
+.otp-card button {
+  min-height: 44px;
+  border-radius: 10px;
+  font-weight: 700;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.btn-primary,
+.claim-btn,
+.confirm-pickup-btn,
+.date-time-apply,
+.login-card button,
+.register-card button,
+.otp-card button,
+.action-buttons button:not(.danger-action),
+.pagination button.active {
+  background: var(--green);
+  color: #ffffff;
+  border: 1px solid var(--green);
+}
+
+.btn-primary:hover,
+.claim-btn:hover,
+.confirm-pickup-btn:hover,
+.date-time-apply:hover,
+.login-card button:hover,
+.register-card button:hover,
+.otp-card button:hover,
+.action-buttons button:not(.danger-action):hover {
+  background: var(--green-dark);
+  border-color: var(--green-dark);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.btn-secondary,
+.map-btn,
+.date-time-clear,
+.pagination-button,
+.pagination button,
+.otp-card .secondary-otp-button {
+  background: #ffffff;
+  color: var(--green-dark);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover,
+.map-btn:hover,
+.date-time-clear:hover,
+.pagination-button:hover:not(:disabled),
+.pagination button:hover:not(:disabled),
+.otp-card .secondary-otp-button:hover {
+  background: var(--surface-alt);
+  border-color: rgba(45, 125, 58, 0.28);
+  color: var(--green-dark);
+}
+
+button:disabled,
+.pagination-button:disabled,
+.pagination button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.danger-action,
+.btn-danger,
+.dropdown .logout {
+  color: #b42318;
+}
+
+.danger-action:hover,
+.btn-danger:hover,
+.dropdown .logout:hover {
+  background: #b42318;
+  border-color: #b42318;
+  color: #ffffff;
+}
+
+.analytics-table,
+.history-table {
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+.analytics-table th,
+.history-table th {
+  background: var(--surface-alt);
+  color: var(--green-dark);
+  font-weight: 700;
+}
+
+.analytics-table th,
+.analytics-table td,
+.history-table th,
+.history-table td {
+  border-bottom: 1px solid var(--border);
+}
+
+.table-container,
+.history-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.status,
+.verified-badge,
+.profile-verified {
+  border-radius: 999px;
+}
+
+.verified-badge {
+  background: var(--surface-alt);
+  color: var(--green-dark);
+  border: 1px solid var(--border);
+}
+
+.dropdown,
+.select-menu-list {
+  border-radius: 10px;
+  box-shadow: 0 18px 42px var(--shadow-strong);
+}
+
+.payment-modal {
+  background: rgba(10, 25, 12, 0.28);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@media (max-width: 768px) {
+  .login-left,
+  .register-left,
+  .profile-left {
+    padding: 34px 22px;
+  }
+
+  .login-card,
+  .register-card,
+  .profile-card,
+  .dashboard-card,
+  .donate-card,
+  .food-table,
+  .payment-modal-card {
+    padding: 22px;
+  }
+}
