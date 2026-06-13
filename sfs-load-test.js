@@ -8,7 +8,8 @@ export let options = {
 
 export default function () {
 
-  let url = 'http://localhost:5000/api/auth/login';
+  let baseUrl = __ENV.BASE_URL || 'http://localhost:5000';
+  let url = `${baseUrl}/api/auth/login`;
 
   let payload = JSON.stringify({
     email: 'hokwirmoki@gmail.com',
@@ -22,9 +23,6 @@ export default function () {
   };
 
   let res = http.post(url, payload, params);
-
-  console.log('STATUS:', res.status);
-  console.log('BODY:', res.body);
 
   check(res, {
     'login success': (r) => r.status === 200,

@@ -28,21 +28,47 @@ class User {
     }
 
     static async findByEmail(email) {
-        await expireVerificationBadges();
-
         const result = await db.query(
-            `SELECT * FROM users WHERE email = $1`,
-            [email]
+            `SELECT
+                id,
+                name,
+                email,
+                password,
+                phone,
+                role,
+                location,
+                latitude,
+                longitude,
+                notification_mode,
+                verification_status,
+                verification_approved_at,
+                verification_expires_at,
+                is_verified
+             FROM users
+             WHERE email = $1`,
+            [email?.trim().toLowerCase()]
         );
 
         return result.rows[0];
     }
 
     static async findById(id) {
-        await expireVerificationBadges();
-
         const result = await db.query(
-            `SELECT * FROM users WHERE id = $1`,
+            `SELECT
+                id,
+                name,
+                email,
+                phone,
+                role,
+                location,
+                latitude,
+                longitude,
+                notification_mode,
+                verification_status,
+                verification_approved_at,
+                verification_expires_at,
+                is_verified
+             FROM users WHERE id = $1`,
             [id]
         );
 

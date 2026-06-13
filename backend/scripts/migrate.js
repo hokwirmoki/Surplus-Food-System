@@ -114,6 +114,11 @@ async function migrate() {
             ON users (role, verification_status, verification_expires_at)
         `);
 
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_users_email
+            ON users (email)
+        `);
+
         console.log('Migration completed');
     } catch (err) {
         console.error('Migration error:', err);
@@ -121,7 +126,7 @@ async function migrate() {
 }
 
 if (require.main === module) {
-    migrate();
+    migrate().finally(() => db.end());
 }
 
 module.exports = migrate;

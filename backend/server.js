@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+process.env.UV_THREADPOOL_SIZE = process.env.UV_THREADPOOL_SIZE || "16";
 require("dotenv").config();
 const migrate = require("./scripts/migrate");
 

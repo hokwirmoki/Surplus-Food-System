@@ -8,6 +8,9 @@ import "./App.css";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { registerServiceWorker } from "./registerServiceWorker";
+
+registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   // ❌ REMOVE StrictMode (this is the root cause)

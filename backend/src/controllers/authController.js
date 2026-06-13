@@ -14,7 +14,8 @@ const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 // ========================
 exports.register = async (req, res) => {
     try {
-        const { name, email, password, role, phone, location, latitude, longitude } = req.body;
+        const { name, password, role, phone, location, latitude, longitude } = req.body;
+        const email = req.body.email?.trim().toLowerCase();
 
         const existingUser = await User.findByEmail(email);
         if (existingUser) {
@@ -112,7 +113,8 @@ exports.login = async (req, res) => {
     try {
         await expireVerificationBadges();
 
-        const { email, password } = req.body;
+        const email = req.body.email?.trim().toLowerCase();
+        const { password } = req.body;
 
         const user = await User.findByEmail(email);
         if (!user) {
