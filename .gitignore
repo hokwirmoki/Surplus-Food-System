@@ -6,6 +6,8 @@ backend/.env
 dist/
 frontend/dist/
 *.log
+*.dump
+db-backups/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

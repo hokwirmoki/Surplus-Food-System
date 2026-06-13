@@ -2,9 +2,49 @@ const db = require('../src/config/db');
 
 async function migrate() {
     try {
-        // Add new columns to users table
         await db.query(`
-            ALTER TABLE users 
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                role TEXT NOT NULL,
+                phone TEXT,
+                location TEXT,
+                latitude DOUBLE PRECISION,
+                longitude DOUBLE PRECISION,
+                notification_mode TEXT DEFAULT 'whatsapp',
+                verification_status TEXT DEFAULT 'unverified',
+                documents JSONB,
+                verification_approved_at TIMESTAMP,
+                verification_expires_at TIMESTAMP,
+                otp_code INTEGER,
+                is_verified BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS food_items (
+                id SERIAL PRIMARY KEY,
+                donor_id INTEGER REFERENCES users(id),
+                food_type TEXT NOT NULL,
+                quantity VARCHAR(50) NOT NULL,
+                location TEXT,
+                expiry_time TIMESTAMP,
+                status TEXT DEFAULT 'available',
+                is_discounted BOOLEAN DEFAULT FALSE,
+                discount_price DECIMAL(10,2),
+                claimed_by INTEGER REFERENCES users(id),
+                pickup_status TEXT DEFAULT 'not_picked',
+                latitude DOUBLE PRECISION,
+                longitude DOUBLE PRECISION,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await db.query(`
+            ALTER TABLE users
             ADD COLUMN IF NOT EXISTS location TEXT,
             ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
             ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION,
@@ -12,24 +52,27 @@ async function migrate() {
             ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'unverified',
             ADD COLUMN IF NOT EXISTS documents JSONB,
             ADD COLUMN IF NOT EXISTS verification_approved_at TIMESTAMP,
-            ADD COLUMN IF NOT EXISTS verification_expires_at TIMESTAMP
+            ADD COLUMN IF NOT EXISTS verification_expires_at TIMESTAMP,
+            ADD COLUMN IF NOT EXISTS otp_code INTEGER,
+            ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         `);
 
         await db.query(`
-            UPDATE users
-            SET
-                verification_approved_at = COALESCE(verification_approved_at, NOW()),
-                verification_expires_at = COALESCE(verification_expires_at, NOW() + INTERVAL '1 year')
-            WHERE role = 'donor'
-              AND verification_status = 'verified'
-              AND verification_expires_at IS NULL
+            ALTER TABLE food_items
+            ADD COLUMN IF NOT EXISTS is_discounted BOOLEAN DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS discount_price DECIMAL(10,2),
+            ADD COLUMN IF NOT EXISTS claimed_by INTEGER REFERENCES users(id),
+            ADD COLUMN IF NOT EXISTS pickup_status TEXT DEFAULT 'not_picked',
+            ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
+            ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION,
+            ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         `);
 
-        // Create transactions table
         await db.query(`
             CREATE TABLE IF NOT EXISTS transactions (
                 id SERIAL PRIMARY KEY,
-                type TEXT NOT NULL, -- 'reservation', 'verification', 'commission'
+                type TEXT NOT NULL,
                 amount DECIMAL(10,2) NOT NULL,
                 user_id INTEGER REFERENCES users(id),
                 food_id INTEGER REFERENCES food_items(id),
@@ -48,34 +91,34 @@ async function migrate() {
             )
         `);
 
-        // Add columns to food_items
-        await db.query(`
-            ALTER TABLE food_items 
-            ADD COLUMN IF NOT EXISTS is_discounted BOOLEAN DEFAULT FALSE,
-            ADD COLUMN IF NOT EXISTS discount_price DECIMAL(10,2),
-            ADD COLUMN IF NOT EXISTS claimed_by INTEGER REFERENCES users(id),
-            ADD COLUMN IF NOT EXISTS pickup_status TEXT DEFAULT 'not_picked',
-            ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
-            ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION
-        `);
-
-        // Create claims table
         await db.query(`
             CREATE TABLE IF NOT EXISTS claims (
                 id SERIAL PRIMARY KEY,
                 food_id INTEGER REFERENCES food_items(id),
                 recipient_id INTEGER REFERENCES users(id),
                 quantity INTEGER DEFAULT 1,
-                status TEXT DEFAULT 'claimed', -- 'claimed', 'picked_up'
+                status TEXT DEFAULT 'claimed',
                 reservation_fee_paid BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
 
-        // Ensure existing claims table has quantity column
         await db.query(`
             ALTER TABLE claims
-            ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1
+            ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1,
+            ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'claimed',
+            ADD COLUMN IF NOT EXISTS reservation_fee_paid BOOLEAN DEFAULT FALSE,
+            ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        `);
+
+        await db.query(`
+            UPDATE users
+            SET
+                verification_approved_at = COALESCE(verification_approved_at, NOW()),
+                verification_expires_at = COALESCE(verification_expires_at, NOW() + INTERVAL '1 year')
+            WHERE role = 'donor'
+              AND verification_status = 'verified'
+              AND verification_expires_at IS NULL
         `);
 
         await db.query(`
@@ -133,6 +176,7 @@ async function migrate() {
         console.log('Migration completed');
     } catch (err) {
         console.error('Migration error:', err);
+        throw err;
     }
 }
 
