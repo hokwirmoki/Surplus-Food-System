@@ -20,7 +20,6 @@ import ViewImpact from "./pages/ViewImpact.jsx";
 import VerifyUsers from "./pages/VerifyUsers.jsx";
 import ViewFinancials from "./pages/ViewFinancials.jsx";
 import HomeRedirect from "./pages/HomeRedirect.jsx";
-import "./styles/system.css";
 
 function App() {
   const [user, setUser] = useState(() => {
