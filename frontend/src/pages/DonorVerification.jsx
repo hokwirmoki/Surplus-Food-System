@@ -155,12 +155,12 @@ function DonorVerification() {
   const displayedHistory = history.slice((page - 1) * rowsPerPage, page * rowsPerPage);
 
   return (
-    <div className="register-page">
-      <div className="register-content">
-        <div className="register-card">
+    <div className="register-page verification-page">
+      <div className="register-content verification-content">
+        <div className="register-card verification-form-card">
           <h2>Apply for Donor Verification</h2>
 
-          <label style={{ textAlign: 'left', width: '100%', marginBottom: 6 }}>Type</label>
+          <label className="form-label compact-label">Type</label>
           <SelectMenu
             value={vendorType}
             onChange={setVendorType}
@@ -176,7 +176,7 @@ function DonorVerification() {
             <input type="file" onChange={handleFile} />
           </label>
 
-          <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
+          <div className="verification-actions">
             <button type="button" className="btn-secondary" onClick={openPaymentModal}>
               Pay {formatUGX(50000)}
             </button>
@@ -186,43 +186,45 @@ function DonorVerification() {
           </div>
         </div>
 
-          <div className="register-card">
+          <div className="register-card verification-history-card">
           <h3>Application history</h3>
-          <p style={{ marginTop: 6, marginBottom: 18, fontSize: 13, color: '#666' }}>
+          <p className="verification-history-copy">
             Review your submitted verification application and current status here.
           </p>
-          <table className="history-table">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Document</th>
-                <th>Provider</th>
-                <th>Phone</th>
-                <th>Status</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayedHistory.length > 0 ? (
-                displayedHistory.map((item, index) => (
-                  <tr key={`${item.id}-${index}`}>
-                    <td>{item.type}</td>
-                    <td>{item.documentName}</td>
-                    <td>{item.provider}</td>
-                    <td>{item.paymentNumber}</td>
-                    <td>{renderVerificationStatus(item.status)}</td>
-                    <td>{item.amount}</td>
-                  </tr>
-                ))
-              ) : (
+          <div className="history-table-wrap">
+            <table className="history-table">
+              <thead>
                 <tr>
-                  <td colSpan={6} style={{ padding: '16px 8px', textAlign: 'center' }}>
-                    No application history found.
-                  </td>
+                  <th>Type</th>
+                  <th>Document</th>
+                  <th>Provider</th>
+                  <th>Phone</th>
+                  <th>Status</th>
+                  <th>Amount</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {displayedHistory.length > 0 ? (
+                  displayedHistory.map((item, index) => (
+                    <tr key={`${item.id}-${index}`}>
+                      <td data-label="Type">{item.type}</td>
+                      <td data-label="Document">{item.documentName}</td>
+                      <td data-label="Provider">{item.provider}</td>
+                      <td data-label="Phone">{item.paymentNumber}</td>
+                      <td data-label="Status">{renderVerificationStatus(item.status)}</td>
+                      <td data-label="Amount">{item.amount}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="empty-history-cell">
+                      No application history found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
 
           <div className="pagination-container">
             <button

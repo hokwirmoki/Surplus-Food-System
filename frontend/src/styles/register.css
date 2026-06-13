@@ -321,3 +321,237 @@
     align-items: center;
   }
 }
+
+.verification-page {
+  align-items: stretch;
+}
+
+.verification-content {
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+.verification-form-card,
+.verification-history-card {
+  min-width: 0;
+}
+
+.compact-label {
+  margin-top: 0;
+}
+
+.verification-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.verification-history-copy {
+  margin: 6px 0 18px;
+  color: #5f6b7a;
+  font-size: 14px;
+}
+
+.history-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.empty-history-cell {
+  padding: 16px 8px;
+  text-align: center;
+}
+
+.payment-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 25, 12, 0.42);
+}
+
+.payment-modal-card {
+  width: min(440px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.18);
+}
+
+.payment-modal-card h3 {
+  margin: 0 0 18px;
+  color: var(--green);
+}
+
+.payment-modal-body {
+  display: grid;
+  gap: 12px;
+}
+
+.payment-modal-body label {
+  color: var(--green-dark);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.payment-modal-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--green-dark);
+}
+
+.payment-modal-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+@media (max-width: 700px) {
+  .verification-content {
+    gap: 16px;
+    padding: 14px;
+  }
+
+  .verification-form-card,
+  .verification-history-card {
+    padding: 22px;
+    border-radius: 14px;
+  }
+
+  .verification-form-card h2,
+  .verification-history-card h3 {
+    font-size: 21px;
+  }
+
+  .verification-actions,
+  .payment-modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .file-upload-control {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .file-upload-control span {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .file-upload-control::after {
+    width: 100%;
+    text-align: center;
+  }
+
+  .history-table-wrap {
+    overflow: visible;
+  }
+
+  .history-table,
+  .history-table thead,
+  .history-table tbody,
+  .history-table tr,
+  .history-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .history-table thead {
+    display: none;
+  }
+
+  .history-table tr {
+    margin-bottom: 12px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-alt);
+  }
+
+  .history-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(46, 125, 50, 0.12);
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  .history-table td:last-child {
+    border-bottom: none;
+  }
+
+  .history-table td::before {
+    content: attr(data-label);
+    flex: 0 0 92px;
+    color: var(--green);
+    font-weight: 700;
+    text-align: left;
+  }
+
+  .empty-history-cell {
+    display: block;
+    text-align: center;
+  }
+
+  .empty-history-cell::before {
+    content: "";
+    display: none;
+  }
+
+  .pagination-container {
+    justify-content: stretch;
+    flex-wrap: wrap;
+  }
+
+  .pagination-container .pagination-button {
+    flex: 1 1 120px;
+  }
+
+  .pagination-info {
+    flex: 1 0 100%;
+    order: -1;
+    text-align: center;
+  }
+
+  .payment-modal {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  .payment-modal-card {
+    padding: 20px;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 420px) {
+  .verification-content {
+    padding: 10px;
+  }
+
+  .verification-form-card,
+  .verification-history-card {
+    padding: 18px;
+  }
+
+  .history-table td {
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+  }
+}
