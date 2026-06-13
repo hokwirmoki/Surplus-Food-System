@@ -45,6 +45,9 @@ app.use("/api/user", userRoutes);
 const adminRoutes = require("./routes/adminRoutes");
 app.use("/api/admin", adminRoutes);
 
+const paymentRoutes = require("./routes/paymentRoutes");
+app.use("/api/payments", paymentRoutes);
+
 const updateExpiredFood = require("../utils/foodExpiryUpdater");
 setInterval(() => {
     updateExpiredFood({ force: true });

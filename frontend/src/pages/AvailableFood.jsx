@@ -20,6 +20,7 @@ function AvailableFood() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentProvider, setPaymentProvider] = useState("MTN");
   const [paymentNumber, setPaymentNumber] = useState("");
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const previousIds = useRef([]);
 
   const fetchFood = async () => {
@@ -71,9 +72,10 @@ function AvailableFood() {
     setSelectedFood(null);
     setPaymentProvider("MTN");
     setPaymentNumber("");
+    setPaymentLoading(false);
   };
 
-  const claimFood = async (food, paymentProvider, paymentNumber) => {
+  const claimFood = async (food, paymentProvider, paymentNumber, paymentReference) => {
     try {
       const requestedQuantity = parseInt(claimQuantities[food.id] || "", 10);
 
@@ -94,6 +96,7 @@ function AvailableFood() {
           quantity: requestedQuantity,
           paymentProvider,
           paymentNumber,
+          paymentReference,
         }
       );
 
@@ -109,9 +112,50 @@ function AvailableFood() {
     }
   };
 
-  const confirmPayment = () => {
+  const confirmPayment = async () => {
     if (!selectedFood) return;
-    claimFood(selectedFood, paymentProvider, paymentNumber);
+    const requestedQuantity = parseInt(claimQuantities[selectedFood.id] || "", 10);
+
+    if (!requestedQuantity || requestedQuantity <= 0) {
+      toast.error("Please enter a valid quantity to claim");
+      return;
+    }
+
+    if (!paymentNumber.trim()) {
+      toast.error("Please enter your payment number");
+      return;
+    }
+
+    const amount = selectedFood.is_discounted
+      ? Number(selectedFood.discount_price || 0) * requestedQuantity
+      : 1000;
+
+    try {
+      setPaymentLoading(true);
+      const paymentRes = await API.post("/payments/sandbox", {
+        provider: paymentProvider,
+        phone: paymentNumber,
+        amount,
+        purpose: "claim",
+        foodId: selectedFood.id,
+        metadata: {
+          foodType: selectedFood.food_type,
+          quantity: requestedQuantity,
+        },
+      });
+
+      toast.success(`${paymentProvider} sandbox payment successful`);
+      await claimFood(
+        selectedFood,
+        paymentProvider,
+        paymentNumber,
+        paymentRes.data.payment.reference
+      );
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Payment failed");
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   const getTimeLeft = (expiry) => {
@@ -291,8 +335,8 @@ function AvailableFood() {
               <button className="map-btn" onClick={closePaymentModal}>
                 Cancel
               </button>
-              <button className="claim-btn" onClick={confirmPayment}>
-                Confirm Payment
+              <button className="claim-btn" onClick={confirmPayment} disabled={paymentLoading}>
+                {paymentLoading ? "Processing..." : "Confirm Payment"}
               </button>
             </div>
           </div>

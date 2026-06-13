@@ -3,6 +3,10 @@ const updateExpiredFood = require("../../utils/foodExpiryUpdater");
 const { sendWhatsApp } = require("../../utils/notificationService");
 const logActivity = require("../../utils/activityLogger");
 const expireVerificationBadges = require("../../utils/verificationExpiry");
+const {
+  createSandboxPayment,
+  consumeSuccessfulPayment,
+} = require("../../utils/paymentService");
 
 const NEARBY_RADIUS_KM = Number(process.env.NEARBY_RADIUS_KM || 10);
 
@@ -103,13 +107,13 @@ exports.claimFood = async (req, res) => {
   try {
     client = await db.connect();
     const recipient_id = req.user.id;
-    const { food_id, quantity, paymentProvider, paymentNumber } = req.body;
+    const { food_id, quantity, paymentProvider, paymentNumber, paymentReference } = req.body;
 
     if (!food_id) {
       return res.status(400).json({ message: "food_id is required" });
     }
 
-    if (!paymentProvider || !paymentNumber) {
+    if (!paymentReference && (!paymentProvider || !paymentNumber)) {
       return res.status(400).json({ message: "Payment provider and number are required" });
     }
 
@@ -156,6 +160,24 @@ exports.claimFood = async (req, res) => {
     const isDiscounted = Boolean(food.is_discounted);
     const paymentAmount = isDiscounted ? Number(food.discount_price || 0) * requestedQuantity : 1000;
     const transactionType = isDiscounted ? "purchase" : "reservation";
+    const payment = paymentReference
+      ? await consumeSuccessfulPayment(client, {
+        reference: paymentReference,
+        userId: recipient_id,
+        purpose: "claim",
+        amount: paymentAmount,
+        foodId: food_id,
+      })
+      : await createSandboxPayment(client, {
+        userId: recipient_id,
+        provider: paymentProvider,
+        phone: paymentNumber,
+        amount: paymentAmount,
+        purpose: "claim",
+        foodId: food_id,
+        metadata: { quantity: requestedQuantity },
+        consume: true,
+      });
 
     await client.query(
       `UPDATE food_items
@@ -174,17 +196,19 @@ exports.claimFood = async (req, res) => {
     );
 
     await client.query(
-      `INSERT INTO transactions (type, amount, user_id, food_id)
-       VALUES ($1, $2, $3, $4)`,
-      [transactionType, paymentAmount, recipient_id, food_id]
+      `INSERT INTO transactions
+       (type, amount, user_id, food_id, payment_id, payment_provider, payment_reference)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [transactionType, paymentAmount, recipient_id, food_id, payment.id, payment.provider, payment.reference]
     );
 
     if (isDiscounted) {
       const commission = Number((paymentAmount * 0.05).toFixed(2));
       await client.query(
-        `INSERT INTO transactions (type, amount, user_id, food_id)
-         VALUES ('commission', $1, $2, $3)`,
-        [commission, recipient_id, food_id]
+        `INSERT INTO transactions
+         (type, amount, user_id, food_id, payment_id, payment_provider, payment_reference)
+         VALUES ('commission', $1, $2, $3, $4, $5, $6)`,
+        [commission, recipient_id, food_id, payment.id, payment.provider, payment.reference]
       );
     }
 
@@ -198,13 +222,21 @@ exports.claimFood = async (req, res) => {
     await client.query("COMMIT");
     transactionStarted = false;
 
-    res.json({ message: "Food claimed successfully. Please confirm pickup upon collection." });
+    res.json({
+      message: "Sandbox payment successful. Food claimed successfully. Please confirm pickup upon collection.",
+      payment: {
+        reference: payment.reference,
+        provider: payment.provider,
+        amount: Number(payment.amount),
+        status: payment.status,
+      },
+    });
 
     logActivity({
       userId: recipient_id,
       activityType: "claim_food",
       source: "recipient_claim",
-      metadata: { food_id, quantity: requestedQuantity }
+      metadata: { food_id, quantity: requestedQuantity, payment_reference: payment.reference }
     });
 
     setImmediate(() => {

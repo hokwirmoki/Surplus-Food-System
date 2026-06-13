@@ -104,11 +104,39 @@ async function migrate() {
         `);
 
         await db.query(`
+            CREATE TABLE IF NOT EXISTS payments (
+                id SERIAL PRIMARY KEY,
+                reference TEXT NOT NULL UNIQUE,
+                provider_reference TEXT,
+                provider TEXT NOT NULL,
+                phone TEXT NOT NULL,
+                amount DECIMAL(10,2) NOT NULL,
+                currency TEXT DEFAULT 'UGX',
+                purpose TEXT NOT NULL,
+                status TEXT DEFAULT 'pending',
+                mode TEXT DEFAULT 'sandbox',
+                user_id INTEGER REFERENCES users(id),
+                food_id INTEGER REFERENCES food_items(id),
+                metadata JSONB,
+                consumed_at TIMESTAMP,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await db.query(`
             ALTER TABLE claims
             ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1,
             ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'claimed',
             ADD COLUMN IF NOT EXISTS reservation_fee_paid BOOLEAN DEFAULT FALSE,
             ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        `);
+
+        await db.query(`
+            ALTER TABLE transactions
+            ADD COLUMN IF NOT EXISTS payment_id INTEGER REFERENCES payments(id),
+            ADD COLUMN IF NOT EXISTS payment_provider TEXT,
+            ADD COLUMN IF NOT EXISTS payment_reference TEXT
         `);
 
         await db.query(`
@@ -145,6 +173,16 @@ async function migrate() {
         await db.query(`
             CREATE INDEX IF NOT EXISTS idx_transactions_food_id
             ON transactions (food_id)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_payments_reference
+            ON payments (reference)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_payments_user_purpose_created
+            ON payments (user_id, purpose, created_at DESC)
         `);
 
         await db.query(`

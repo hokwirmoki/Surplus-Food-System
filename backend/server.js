@@ -51,6 +51,7 @@ function createApp() {
   app.use("/api/user", require("./src/routes/userRoutes"));
   app.use("/api/admin", require("./src/routes/adminRoutes"));
   app.use("/api/analytics", require("./src/routes/analyticsRoutes"));
+  app.use("/api/payments", require("./src/routes/paymentRoutes"));
 
   if (process.env.RUN_SCHEDULED_JOBS !== "0") {
     const updateExpiredFood = require("./utils/foodExpiryUpdater");

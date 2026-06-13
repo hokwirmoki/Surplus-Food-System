@@ -16,7 +16,9 @@ function DonorVerification() {
   const [paymentProvider, setPaymentProvider] = useState("MTN");
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentNumber, setPaymentNumber] = useState("");
+  const [paymentReference, setPaymentReference] = useState("");
   const [history, setHistory] = useState([]);
   const [page, setPage] = useState(1);
   const rowsPerPage = 5;
@@ -37,15 +39,31 @@ function DonorVerification() {
     setShowPaymentModal(false);
   };
 
-  const confirmPayment = () => {
+  const confirmPayment = async () => {
     if (!paymentNumber.trim()) {
       return toast.error("Enter your payment phone number");
     }
 
-    setPayContact(paymentNumber);
-    setPaid(true);
-    setShowPaymentModal(false);
-    toast.success("Payment recorded successfully");
+    try {
+      setPaymentLoading(true);
+      const paymentRes = await API.post("/payments/sandbox", {
+        provider: paymentProvider,
+        phone: paymentNumber,
+        amount: 50000,
+        purpose: "verification",
+        metadata: { vendorType },
+      });
+
+      setPayContact(paymentRes.data.payment.phone);
+      setPaymentReference(paymentRes.data.payment.reference);
+      setPaid(true);
+      setShowPaymentModal(false);
+      toast.success(`${paymentProvider} sandbox payment successful`);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Payment failed");
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   const submitApplication = async () => {
@@ -64,7 +82,8 @@ function DonorVerification() {
           document: fileData,
           paymentProvider,
           paymentContact: payContact,
-          paid
+          paid,
+          paymentReference
         },
         {
           headers: {
@@ -178,7 +197,7 @@ function DonorVerification() {
 
           <div className="verification-actions">
             <button type="button" className="btn-secondary" onClick={openPaymentModal}>
-              Pay {formatUGX(50000)}
+              {paid ? "Payment Complete" : `Pay ${formatUGX(50000)}`}
             </button>
             <button type="button" className="btn-primary" onClick={submitApplication} disabled={loading}>
               {loading ? 'Submitting...' : 'Submit Application'}
@@ -284,8 +303,8 @@ function DonorVerification() {
                 <button type="button" className="btn-secondary" onClick={closePaymentModal}>
                   Cancel
                 </button>
-                <button type="button" className="btn-primary" onClick={confirmPayment}>
-                  Confirm Payment
+                <button type="button" className="btn-primary" onClick={confirmPayment} disabled={paymentLoading}>
+                  {paymentLoading ? "Processing..." : "Confirm Payment"}
                 </button>
               </div>
             </div>

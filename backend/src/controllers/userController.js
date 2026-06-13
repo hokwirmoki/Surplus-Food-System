@@ -1,6 +1,10 @@
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 const expireVerificationBadges = require("../../utils/verificationExpiry");
+const {
+  createSandboxPayment,
+  consumeSuccessfulPayment,
+} = require("../../utils/paymentService");
 
 exports.updateUser = async (req, res) => {
   try {
@@ -144,14 +148,17 @@ exports.getCurrentUser = async (req, res) => {
 // DONOR VERIFICATION APPLICATION
 // ============================
 exports.applyForVerification = async (req, res) => {
+  const client = await db.connect();
+
   try {
     await expireVerificationBadges();
+    await client.query("BEGIN");
 
     const user_id = req.user.id;
 
-    const { vendorType, document, paymentProvider, paymentContact, paid } = req.body;
+    const { vendorType, document, paymentProvider, paymentContact, paid, paymentReference } = req.body;
 
-    const currentUser = await db.query(
+    const currentUser = await client.query(
       `SELECT verification_status, verification_expires_at FROM users WHERE id = $1`,
       [user_id]
     );
@@ -161,20 +168,47 @@ exports.applyForVerification = async (req, res) => {
       currentUser.rows[0]?.verification_expires_at &&
       new Date(currentUser.rows[0].verification_expires_at) > new Date()
     ) {
+      await client.query("ROLLBACK");
       return res.status(400).json({
         message: "Your donor badge is still active. You can apply again after it expires."
       });
     }
 
+    if (!paid && !paymentReference) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        message: "Complete the verification payment before submitting your application."
+      });
+    }
+
+    const payment = paymentReference
+      ? await consumeSuccessfulPayment(client, {
+        reference: paymentReference,
+        userId: user_id,
+        purpose: "verification",
+        amount: 50000,
+      })
+      : await createSandboxPayment(client, {
+        userId: user_id,
+        provider: paymentProvider,
+        phone: paymentContact,
+        amount: 50000,
+        purpose: "verification",
+        metadata: { vendorType },
+        consume: true,
+      });
+
     // store documents as JSON with type, payment info, and uploaded file info
     const documents = {
       type: vendorType,
       document,
-      paymentProvider,
-      paymentContact
+      paymentProvider: payment.provider,
+      paymentContact: payment.phone,
+      paymentReference: payment.reference,
+      paymentStatus: payment.status
     };
 
-    const result = await db.query(
+    const result = await client.query(
       `UPDATE users
        SET verification_status = 'pending',
            documents = $1,
@@ -185,17 +219,26 @@ exports.applyForVerification = async (req, res) => {
       [documents, user_id]
     );
 
-    if (paid) {
-      // record verification payment (50,000 UGX)
-      await db.query(
-        `INSERT INTO transactions (type, amount, user_id) VALUES ($1, $2, $3)`,
-        ['verification', 50000, user_id]
-      );
-    }
+    await client.query(
+      `INSERT INTO transactions
+       (type, amount, user_id, payment_id, payment_provider, payment_reference)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      ['verification', 50000, user_id, payment.id, payment.provider, payment.reference]
+    );
 
+    await client.query("COMMIT");
     res.json({ message: 'Verification application submitted', user: result.rows[0] });
   } catch (err) {
+    try {
+      await client.query("ROLLBACK");
+    } catch (rollbackErr) {
+      console.error("VERIFICATION ROLLBACK ERROR:", rollbackErr.message);
+    }
     console.error('VERIFICATION APPLICATION ERROR:', err);
-    res.status(500).json({ error: 'Failed to submit verification application' });
+    res.status(err.status || 500).json({
+      message: err.message || 'Failed to submit verification application'
+    });
+  } finally {
+    client.release();
   }
 };

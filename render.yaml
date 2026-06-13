@@ -41,6 +41,8 @@ services:
         value: "true"
       - key: DEFAULT_COUNTRY_CODE
         value: "+256"
+      - key: PAYMENT_MODE
+        value: sandbox
 
   - type: web
     name: surplus-food-system
