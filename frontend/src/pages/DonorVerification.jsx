@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { FiCheckCircle, FiClock, FiXCircle } from "react-icons/fi";
 import { formatUGX } from "../utils/formatMoney";
+import SelectMenu from "../components/SelectMenu";
 import "../styles/register.css";
 
 function DonorVerification() {
@@ -160,13 +161,20 @@ function DonorVerification() {
           <h2>Apply for Donor Verification</h2>
 
           <label style={{ textAlign: 'left', width: '100%', marginBottom: 6 }}>Type</label>
-          <select value={vendorType} onChange={(e) => setVendorType(e.target.value)}>
-            <option value="institution">Institution (Hotel / Restaurant)</option>
-            <option value="individual">Individual (Vendor)</option>
-          </select>
+          <SelectMenu
+            value={vendorType}
+            onChange={setVendorType}
+            options={[
+              { value: "institution", label: "Institution (Hotel / Restaurant)" },
+              { value: "individual", label: "Individual (Vendor)" }
+            ]}
+          />
 
-          <label style={{ textAlign: 'left', width: '100%', marginTop: 16 }}>Upload Document</label>
-          <input type="file" onChange={handleFile} />
+          <label className="form-label">Upload Document</label>
+          <label className="file-upload-control">
+            <span>{fileData?.name || "Choose file"}</span>
+            <input type="file" onChange={handleFile} />
+          </label>
 
           <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
             <button type="button" className="btn-secondary" onClick={openPaymentModal}>
@@ -244,14 +252,14 @@ function DonorVerification() {
             <h3>Complete Payment</h3>
             <div className="payment-modal-body">
               <label>Service provider</label>
-              <select
-                className="payment-modal-input"
+              <SelectMenu
                 value={paymentProvider}
-                onChange={(e) => setPaymentProvider(e.target.value)}
-              >
-                <option value="MTN">MTN</option>
-                <option value="Airtel">Airtel</option>
-              </select>
+                onChange={setPaymentProvider}
+                options={[
+                  { value: "MTN", label: "MTN" },
+                  { value: "Airtel", label: "Airtel" }
+                ]}
+              />
 
               <label>Phone number</label>
               <input

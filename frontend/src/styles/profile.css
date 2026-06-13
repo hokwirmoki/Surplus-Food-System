@@ -108,16 +108,20 @@
 .profile-card input,
 .profile-card select {
   width: 100%;
-  padding: 11px 14px;
+  height: 48px;
   margin-bottom: 12px;
 
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
 
-  font-size: 14px;
+  font-size: 15px;
   outline: none;
 
   transition: 0.2s;
+}
+
+.profile-card input {
+  padding: 0 14px;
 }
 
 .profile-card input:focus,

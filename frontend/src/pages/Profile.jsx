@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
 import { FaCheckCircle } from "react-icons/fa";
+import SelectMenu from "../components/SelectMenu";
 import "../styles/profile.css";
 
 import profileImg from "../assets/profile.jpg";
@@ -191,14 +192,14 @@ function Profile() {
             />
           )}
 
-          <select
-            name="notification_mode"
+          <SelectMenu
             value={form.notification_mode}
-            onChange={handleChange}
-          >
-            <option value="whatsapp">WhatsApp</option>
-            <option value="sms">SMS</option>
-          </select>
+            onChange={(notification_mode) => setForm({ ...form, notification_mode })}
+            options={[
+              { value: "whatsapp", label: "WhatsApp" },
+              { value: "sms", label: "SMS" }
+            ]}
+          />
 
           <button
             className="btn-primary"

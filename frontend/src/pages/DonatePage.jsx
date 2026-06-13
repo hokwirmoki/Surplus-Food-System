@@ -10,6 +10,7 @@ import {
 
 import "../styles/donatePage.css";
 import LeafletLocationPicker from "../components/LeafletMapPicker";
+import DateTimePicker from "../components/DateTimePicker";
 
 function DonatePage() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -163,11 +164,9 @@ function DonatePage() {
             />
           )}
 
-          <input
-            name="expiry_time"
-            type="datetime-local"
+          <DateTimePicker
             value={form.expiry_time}
-            onChange={handleChange}
+            onChange={(expiry_time) => setForm({ ...form, expiry_time })}
           />
 
           <input
@@ -264,7 +263,15 @@ function DonatePage() {
       {showMap && (
         <div className="map-overlay">
           <div className="map-modal">
-            <button onClick={() => setShowMap(false)}>Close</button>
+            <div className="map-modal-header">
+              <div>
+                <h3>Choose Pickup Location</h3>
+                <p>Click the map or drag the pin to set the food pickup point.</p>
+              </div>
+              <button className="map-close-btn" onClick={() => setShowMap(false)}>
+                Close
+              </button>
+            </div>
             <LeafletLocationPicker onSelect={handleMapSelect} />
           </div>
         </div>

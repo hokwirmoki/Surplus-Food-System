@@ -1,13 +1,13 @@
 /* PAGE */
 .available-page {
-  padding: 20px;
+  padding: 28px;
   background: var(--surface);
   min-height: 100vh;
 }
 
 /* TITLE */
 .page-title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
   color: var(--green);
   margin-bottom: 20px;
@@ -21,14 +21,15 @@
 /* GRID */
 .food-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 18px;
 }
 
 /* CARD */
 .food-card {
   background: white;
-  padding: 16px;
+  padding: 18px;
+  min-width: 0;
 
   border-radius: 12px;
   border: 1px solid var(--border);
@@ -51,7 +52,7 @@
 
 /* TEXT */
 .meta {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--green-dark);
 }
 
@@ -153,11 +154,16 @@
 
 .payment-modal-input {
   width: 100%;
-  padding: 10px 12px;
+  height: 48px;
+  padding: 0 14px;
   border-radius: 12px;
   border: 1px solid var(--border);
-  font-size: 14px;
+  font-size: 15px;
   color: var(--green-dark);
+}
+
+select.payment-modal-input {
+  padding-right: 42px;
 }
 
 .payment-modal-actions {
@@ -178,12 +184,13 @@
 .map-btn,
 .claim-btn {
   flex: 1;
-  padding: 8px;
+  min-height: 42px;
+  padding: 0 12px;
 
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
 
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
 
   display: flex;
@@ -191,18 +198,21 @@
   justify-content: center;
   gap: 6px;
 
-  transition: 0.2s;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* MAP BUTTON */
 .map-btn {
-  background: white;
+  background: linear-gradient(180deg, #ffffff, #fbfdfb);
   color: var(--green);
   border: 1px solid var(--border);
 }
 
 .map-btn:hover {
   background: var(--surface-alt);
+  border-color: rgba(46, 125, 50, 0.34);
+  box-shadow: 0 8px 18px rgba(46, 125, 50, 0.08);
+  transform: translateY(-1px);
 }
 
 /* CLAIM BUTTON */
@@ -235,9 +245,26 @@
 
 .claim-input-group input {
   width: 100%;
-  padding: 8px 10px;
+  height: 44px;
+  padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--green-dark);
+}
+
+@media (max-width: 520px) {
+  .available-page {
+    padding: 18px;
+  }
+
+  .actions,
+  .payment-modal-actions {
+    flex-direction: column;
+  }
+
+  .payment-modal-card {
+    padding: 20px;
+    border-radius: 18px;
+  }
 }

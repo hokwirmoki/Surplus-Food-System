@@ -26,13 +26,14 @@
 
 .login-left h1 {
   margin-bottom: 16px;
-  font-size: 34px;
+  font-size: 38px;
+  line-height: 1.12;
 }
 
 .login-left p {
   max-width: 400px;
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
   opacity: 0.95;
 }
@@ -70,7 +71,7 @@
 .login-card {
   width: 100%;
   max-width: 400px;
-  padding: 34px;
+  padding: 36px;
   border-radius: 18px;
   border: 1px solid var(--border);
   background: white;
@@ -80,20 +81,21 @@
 
 .login-card h2 {
   margin: 0 0 24px;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 600;
   color: var(--green);
 }
 
 .login-card input {
   width: 100%;
-  padding: 12px 14px;
+  height: 48px;
+  padding: 0 15px;
   margin-bottom: 14px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: white;
   color: var(--green-dark);
-  font-size: 14px;
+  font-size: 15px;
   outline: none;
   transition: 0.2s ease;
 }
@@ -105,12 +107,13 @@
 
 .login-card button {
   width: 100%;
-  padding: 12px;
+  min-height: 48px;
+  padding: 0 16px;
   border: none;
   border-radius: 10px;
   background: var(--green);
   color: white;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: 0.2s ease;
@@ -122,7 +125,7 @@
 
 .login-card p {
   margin-top: 16px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--green-dark);
 }
 

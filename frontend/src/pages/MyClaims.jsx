@@ -113,7 +113,7 @@ function MyClaims() {
             </p>
 
             {c.status === 'claimed' && (
-              <button onClick={() => confirmPickup(c.food_id)}>
+              <button className="confirm-pickup-btn" onClick={() => confirmPickup(c.food_id)}>
                 Confirm Pickup
               </button>
             )}

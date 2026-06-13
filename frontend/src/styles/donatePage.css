@@ -1,35 +1,220 @@
 /* PAGE LAYOUT */
 .donate-page {
-  padding: 20px;
+  padding: 28px;
   background: var(--surface);
   min-height: 100vh;
 }
 
 .donate-grid {
   display: flex;
-  gap: 20px;
+  align-items: flex-start;
+  gap: 24px;
 }
 
 /* LEFT CARD */
 .donate-card {
   flex: 1;
   background: white;
-  padding: 20px;
+  padding: 24px;
 
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid var(--border);
   box-shadow: 0 8px 20px var(--shadow);
+}
+
+.donate-card h2,
+.food-table h3 {
+  margin: 0 0 18px;
+  color: var(--green);
+  font-size: 24px;
+  line-height: 1.2;
 }
 
 /* INPUTS */
 .donate-card input {
   width: 100%;
-  padding: 10px 12px;
-  margin-bottom: 10px;
+  height: 48px;
+  padding: 0 15px;
+  margin-bottom: 12px;
 
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
+  background: #ffffff;
   color: var(--green-dark);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.donate-card input:focus {
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
+.donate-card input[type="datetime-local"],
+.date-picker-input {
+  color-scheme: light;
+  background:
+    linear-gradient(180deg, #ffffff, #fbfdfb) padding-box,
+    linear-gradient(135deg, rgba(46, 125, 50, 0.24), rgba(46, 125, 50, 0.08)) border-box;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  letter-spacing: 0;
+}
+
+.donate-card input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  width: 22px;
+  height: 22px;
+  padding: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+  opacity: 0.78;
+  filter: hue-rotate(70deg) saturate(1.1);
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.donate-card input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+  background: rgba(46, 125, 50, 0.1);
+  opacity: 1;
+}
+
+.date-time-picker {
+  position: relative;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.date-time-trigger {
+  width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px 0 15px;
+  border: 1px solid rgba(46, 125, 50, 0.2);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff, #fbfdfb);
+  color: var(--green-dark);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.date-time-trigger:hover,
+.date-time-trigger.open {
+  border-color: rgba(46, 125, 50, 0.42);
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.08);
+}
+
+.date-time-icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: rgba(46, 125, 50, 0.09);
+  color: var(--green);
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+.date-time-trigger.open .date-time-icon {
+  transform: rotate(180deg);
+}
+
+.date-time-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 1400;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 22px 56px rgba(46, 125, 50, 0.18);
+}
+
+.date-time-panel label {
+  display: grid;
+  gap: 8px;
+  color: var(--green-dark);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.date-time-panel input[type="date"] {
+  margin: 0;
+}
+
+.date-time-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  gap: 12px;
+}
+
+.date-time-options {
+  max-height: 148px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.date-time-options.compact {
+  grid-template-columns: repeat(2, 1fr);
+  max-height: none;
+}
+
+.date-time-options button {
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: var(--surface-alt);
+  color: var(--green-dark);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.date-time-options button:hover,
+.date-time-options button.selected {
+  border-color: rgba(46, 125, 50, 0.28);
+  background: var(--green);
+  color: #ffffff;
+}
+
+.date-time-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.date-time-actions button {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.date-time-clear {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--green-dark);
+}
+
+.date-time-apply {
+  border: 1px solid var(--green);
+  background: var(--green);
+  color: #ffffff;
 }
 
 /* BUTTON GROUP */
@@ -40,12 +225,14 @@
 }
 
 .btn-group button {
-  padding: 10px;
+  min-height: 48px;
+  padding: 0 16px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
 
   cursor: pointer;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .post-btn {
@@ -54,24 +241,30 @@
 }
 
 .secondary-btn {
-  background: white;
+  background: linear-gradient(180deg, #ffffff, #fbfdfb);
   color: var(--green);
   border: 1px solid var(--border);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
 .secondary-btn:hover {
   background: var(--surface-alt);
+  border-color: rgba(46, 125, 50, 0.34);
+  transform: translateY(-1px);
 }
 
 /* TABLE */
 .food-table {
   flex: 2;
   background: white;
-  padding: 20px;
+  padding: 24px;
 
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid var(--border);
   box-shadow: 0 8px 20px var(--shadow);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
@@ -79,10 +272,15 @@ table {
   border-collapse: collapse;
 }
 
+.food-table table {
+  min-width: 620px;
+}
+
 th, td {
-  padding: 10px;
+  padding: 12px;
   text-align: left;
   border-bottom: 1px solid var(--border);
+  font-size: 15px;
 }
 
 .icon {
@@ -98,7 +296,8 @@ th, td {
 }
 
 .pagination button {
-  padding: 6px 10px;
+  min-height: 36px;
+  padding: 0 12px;
   border: 1px solid var(--border);
   background: white;
   border-radius: 6px;
@@ -113,26 +312,24 @@ th, td {
 /* MAP OVERLAY */
 .map-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
+  z-index: 1300;
 
-  width: 100%;
-  height: 100%;
-
-  background: rgba(46, 125, 50, 0.35);
+  background: rgba(9, 30, 18, 0.34);
+  backdrop-filter: blur(10px);
 
   display: flex;
   justify-content: center;
   align-items: center;
 
-  padding-top: 60px; /* gives breathing space from navbar */
+  padding: 24px;
 }
 
 .map-modal {
   background: white;
-  padding: 16px;
+  padding: 18px;
 
-  border-radius: 12px;
+  border-radius: 18px;
   border: 1px solid var(--border);
   box-shadow: 0 24px 70px var(--shadow);
 
@@ -141,4 +338,138 @@ th, td {
 
   max-height: 85vh;
   overflow: hidden;
+}
+
+.map-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.map-modal-header h3 {
+  margin: 0;
+  color: var(--green-dark);
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.map-modal-header p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.map-close-btn {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--green-dark);
+  cursor: pointer;
+  font-weight: 700;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.map-close-btn:hover {
+  background: var(--surface-alt);
+  border-color: rgba(46, 125, 50, 0.34);
+}
+
+.location-picker {
+  display: grid;
+  gap: 12px;
+}
+
+.location-picker-map {
+  width: 100%;
+  height: min(56vh, 430px);
+  min-height: 320px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.location-picker > p,
+.selected-location {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-alt);
+  color: var(--green-dark);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.selected-location-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.12);
+}
+
+@media (max-width: 900px) {
+  .donate-grid {
+    flex-direction: column;
+  }
+
+  .donate-card,
+  .food-table {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .donate-page {
+    padding: 18px;
+  }
+
+  .donate-card,
+  .food-table {
+    padding: 18px;
+  }
+
+  .date-time-panel {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    top: auto;
+    bottom: 16px;
+    max-height: 82vh;
+    overflow-y: auto;
+  }
+
+  .date-time-row {
+    grid-template-columns: 1fr;
+  }
+
+  .date-time-options {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .map-overlay {
+    padding: 14px;
+  }
+
+  .map-modal {
+    width: 100%;
+    max-height: 92vh;
+    padding: 14px;
+  }
+
+  .map-modal-header {
+    flex-direction: column;
+  }
+
+  .map-close-btn {
+    width: 100%;
+  }
 }

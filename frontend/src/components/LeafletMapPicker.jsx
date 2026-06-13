@@ -83,11 +83,11 @@ export default function LeafletLocationPicker({ onSelect }) {
   }, [position, address, onSelect]);
 
   return (
-    <div>
+    <div className="location-picker">
       <MapContainer
         center={position}
         zoom={13}
-        style={{ height: "400px", width: "100%" }}
+        className="location-picker-map"
       >
         <ResizeMap />
 

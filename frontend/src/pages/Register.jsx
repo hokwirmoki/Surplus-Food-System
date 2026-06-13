@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { toast } from "react-toastify";
+import SelectMenu from "../components/SelectMenu";
 import "../styles/register.css";
 
 import { FiUserPlus, FiUsers, FiRefreshCw } from "react-icons/fi";
@@ -123,10 +124,14 @@ function Register() {
           <input name="phone" value={form.phone} placeholder="Phone Number" onChange={handleChange} />
           <input name="location" value={form.location} placeholder="Location (e.g., Kampala, Uganda)" onChange={handleChange} />
 
-          <select name="role" value={form.role} onChange={handleChange}>
-            <option value="donor">Donor</option>
-            <option value="recipient">Recipient</option>
-          </select>
+          <SelectMenu
+            value={form.role}
+            onChange={(role) => setForm({ ...form, role })}
+            options={[
+              { value: "donor", label: "Donor" },
+              { value: "recipient", label: "Recipient" }
+            ]}
+          />
 
           <button onClick={register} disabled={loading}>
             {loading ? "Registering..." : "Register"}

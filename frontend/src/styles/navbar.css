@@ -41,7 +41,7 @@
 .navbar-right p {
   margin: 0;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--green-dark);
   transition: 0.2s ease;
 }
@@ -96,7 +96,7 @@
   margin: 0;
 
   cursor: pointer;
-  font-size: 14px;
+  font-size: 15px;
   transition: 0.2s;
 }
 
@@ -111,9 +111,22 @@
 }
 
 /* logout special */
+.dropdown .logout {
+  color: #b42318;
+  font-weight: 700;
+}
+
+.dropdown .logout .icon {
+  color: #b42318;
+}
+
 .dropdown .logout:hover {
-  background: var(--surface-alt);
-  color: var(--green-dark);
+  background: #b42318;
+  color: #ffffff;
+}
+
+.dropdown .logout:hover .icon {
+  color: #ffffff;
 }
 
 /* HAMBURGER */
@@ -149,5 +162,26 @@
 
   .navbar-right.active {
     display: flex;
+  }
+}
+
+@media (max-width: 520px) {
+  .navbar {
+    padding: 10px 14px;
+  }
+
+  .navbar-logo h3 {
+    font-size: 15px;
+  }
+
+  .logo-img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .navbar-right {
+    left: 0;
+    right: 0;
+    width: 100%;
   }
 }

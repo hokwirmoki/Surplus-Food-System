@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
 import { formatUGX } from "../utils/formatMoney";
+import SelectMenu from "../components/SelectMenu";
 
 import {
   FaClock,
@@ -262,14 +263,14 @@ function AvailableFood() {
             <div className="payment-modal-body">
               <div className="payment-modal-field">
                 <label>Payment Provider</label>
-                <select
-                  className="payment-modal-input"
+                <SelectMenu
                   value={paymentProvider}
-                  onChange={(e) => setPaymentProvider(e.target.value)}
-                >
-                  <option value="MTN">MTN</option>
-                  <option value="Airtel">Airtel</option>
-                </select>
+                  onChange={setPaymentProvider}
+                  options={[
+                    { value: "MTN", label: "MTN" },
+                    { value: "Airtel", label: "Airtel" }
+                  ]}
+                />
               </div>
 
               <div className="payment-modal-field">
