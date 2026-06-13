@@ -3,16 +3,10 @@ const updateExpiredFood = require("../../utils/foodExpiryUpdater");
 const { sendWhatsApp } = require("../../utils/notificationService");
 const logActivity = require("../../utils/activityLogger");
 
-// ============================
-// POST FOOD
-// ============================
 exports.postFood = async (req, res) => {
   try {
     const donor_id = req.user.id;
-
     const { food_type, quantity, expiry_time, is_discounted, price } = req.body;
-
-    // Get location from user
     const { location, latitude, longitude } = req.body;
 
     if (!location || location.trim() === "") {
@@ -55,40 +49,40 @@ exports.postFood = async (req, res) => {
       ]
     );
 
-    // ==================================================
-    // 📲 WHATSAPP NOTIFICATION ONLY (NO EMAIL SYSTEM)
-    // ==================================================
-    const recipients = await db.query(
-      `SELECT phone, notification_mode
-       FROM users
-       WHERE role = 'recipient'`
-    );
-
-    // Use the saved food location for notifications
     const savedFood = food.rows[0];
-    const mapLink = savedFood.latitude && savedFood.longitude
-      ? `https://www.google.com/maps?q=${savedFood.latitude},${savedFood.longitude}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(savedFood.location || "")}`;
+    res.status(201).json(savedFood);
 
-    const message = `
-🍱 New Food Available!
-Food: ${savedFood.food_type}
-Quantity: ${savedFood.quantity}
-Location: ${savedFood.location || "GPS Location"}
+    setImmediate(async () => {
+      try {
+        const recipients = await db.query(
+          `SELECT phone, notification_mode
+           FROM users
+           WHERE role = 'recipient'`
+        );
 
-📍 Open in Google Maps:
-${mapLink}
-`;
+        const mapLink = savedFood.latitude && savedFood.longitude
+          ? `https://www.google.com/maps?q=${savedFood.latitude},${savedFood.longitude}`
+          : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(savedFood.location || "")}`;
 
-    recipients.rows.forEach((r) => {
-      if (!r.phone) return;
+        const message = [
+          "New Food Available!",
+          `Food: ${savedFood.food_type}`,
+          `Quantity: ${savedFood.quantity}`,
+          `Location: ${savedFood.location || "GPS Location"}`,
+          "",
+          "Open in Google Maps:",
+          mapLink
+        ].join("\n");
 
-      if (r.notification_mode === "whatsapp") {
-        sendWhatsApp(r.phone, message);
+        recipients.rows.forEach((recipient) => {
+          if (recipient.phone && recipient.notification_mode === "whatsapp") {
+            sendWhatsApp(recipient.phone, message);
+          }
+        });
+      } catch (err) {
+        console.error("FOOD NOTIFICATION ERROR:", err.message);
       }
     });
-
-    res.status(201).json(savedFood);
 
   } catch (err) {
     console.error(err);
@@ -96,9 +90,6 @@ ${mapLink}
   }
 };
 
-// ============================
-// GET DONOR FOOD
-// ============================
 exports.getPostedFood = async (req, res) => {
   try {
     const donor_id = req.user.id;

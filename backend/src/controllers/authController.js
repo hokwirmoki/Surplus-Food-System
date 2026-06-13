@@ -111,7 +111,11 @@ exports.verifyOtp = async (req, res) => {
 // ========================
 exports.login = async (req, res) => {
     try {
-        await expireVerificationBadges();
+        setImmediate(() => {
+            expireVerificationBadges().catch((err) => {
+                console.error("VERIFICATION EXPIRY ERROR:", err.message);
+            });
+        });
 
         const email = req.body.email?.trim().toLowerCase();
         const { password } = req.body;
@@ -158,11 +162,13 @@ exports.login = async (req, res) => {
             }
         });
 
-        logActivity({
-            userId: user.id,
-            activityType: "login",
-            source: "auth",
-            metadata: { role: user.role }
+        setImmediate(() => {
+            logActivity({
+                userId: user.id,
+                activityType: "login",
+                source: "auth",
+                metadata: { role: user.role }
+            });
         });
 
     } catch (err) {

@@ -4,15 +4,15 @@ const { sendWhatsApp } = require("../../utils/notificationService");
 const logActivity = require("../../utils/activityLogger");
 const expireVerificationBadges = require("../../utils/verificationExpiry");
 
-
-// ============================
-// GET AVAILABLE FOOD (FIXED)
-// ============================
 exports.getAvailableFood = async (req, res) => {
   try {
-    // auto-update expired food first
     await updateExpiredFood();
-    await expireVerificationBadges();
+
+    setImmediate(() => {
+      expireVerificationBadges().catch((err) => {
+        console.error("VERIFICATION EXPIRY ERROR:", err.message);
+      });
+    });
 
     if (req.user?.id) {
       logActivity({
@@ -45,31 +45,11 @@ exports.getAvailableFood = async (req, res) => {
   }
 };
 
-// Haversine distance function
-function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Radius of the earth in km
-  const dLat = deg2rad(lat2 - lat1);
-  const dLon = deg2rad(lon2 - lon1);
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const d = R * c; // Distance in km
-  return d;
-}
-
-function deg2rad(deg) {
-  return deg * (Math.PI / 180);
-}
-
 function parseQuantity(value) {
   const parsed = Number.parseInt(String(value).replace(/[^0-9]/g, ""), 10);
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-// ============================
-// CLAIM FOOD (UPDATED WITH DONOR NOTIFICATION)
-// ============================
 exports.claimFood = async (req, res) => {
   let client;
   let transactionStarted = false;
@@ -95,9 +75,6 @@ exports.claimFood = async (req, res) => {
     await client.query("BEGIN");
     transactionStarted = true;
 
-    // ============================
-    // GET FOOD + DONOR INFO
-    // ============================
     const foodResult = await client.query(
       `SELECT f.*, u.phone, u.notification_mode, u.name as donor_name
        FROM food_items f
@@ -129,14 +106,11 @@ exports.claimFood = async (req, res) => {
     }
 
     const remainingQuantity = availableQuantity - requestedQuantity;
-    const newStatus = remainingQuantity === 0 ? 'claimed' : 'available';
+    const newStatus = remainingQuantity === 0 ? "claimed" : "available";
     const isDiscounted = Boolean(food.is_discounted);
     const paymentAmount = isDiscounted ? Number(food.discount_price || 0) * requestedQuantity : 1000;
-    const transactionType = isDiscounted ? 'purchase' : 'reservation';
+    const transactionType = isDiscounted ? "purchase" : "reservation";
 
-    // ============================
-    // UPDATE FOOD STATUS / QUANTITY
-    // ============================
     await client.query(
       `UPDATE food_items
        SET quantity = $1::varchar,
@@ -146,9 +120,6 @@ exports.claimFood = async (req, res) => {
       [remainingQuantity, newStatus, recipient_id, food_id]
     );
 
-    // ============================
-    // SAVE CLAIM RECORD
-    // ============================
     await client.query(
       `INSERT INTO claims
        (food_id, recipient_id, quantity, status, reservation_fee_paid)
@@ -156,9 +127,6 @@ exports.claimFood = async (req, res) => {
       [food_id, recipient_id, requestedQuantity]
     );
 
-    // ============================
-    // CHARGE FEE OR PURCHASE AMOUNT
-    // ============================
     await client.query(
       `INSERT INTO transactions (type, amount, user_id, food_id)
        VALUES ($1, $2, $3, $4)`,
@@ -174,9 +142,6 @@ exports.claimFood = async (req, res) => {
       );
     }
 
-    // ============================
-    // GET RECIPIENT INFO
-    // ============================
     const recipientRes = await client.query(
       `SELECT name FROM users WHERE id = $1`,
       [recipient_id]
@@ -187,6 +152,8 @@ exports.claimFood = async (req, res) => {
     await client.query("COMMIT");
     transactionStarted = false;
 
+    res.json({ message: "Food claimed successfully. Please confirm pickup upon collection." });
+
     logActivity({
       userId: recipient_id,
       activityType: "claim_food",
@@ -194,26 +161,20 @@ exports.claimFood = async (req, res) => {
       metadata: { food_id, quantity: requestedQuantity }
     });
 
-    // ============================
-    // 📲 NOTIFY DONOR (WHATSAPP ONLY)
-    // ============================
-    const message = `
-🍱 Your food has been CLAIMED!
+    setImmediate(() => {
+      if (food.phone && food.notification_mode === "whatsapp") {
+        const message = [
+          "Your food has been claimed.",
+          `Food: ${food.food_type}`,
+          `Quantity: ${requestedQuantity}`,
+          `Location: ${food.location}`,
+          `Claimed by: ${recipient?.name || "A recipient"}`,
+          `Time: ${new Date().toLocaleString()}`
+        ].join("\n");
 
-Food: ${food.food_type}
-Quantity: ${food.quantity}
-Location: ${food.location}
-
-👤 Claimed by: ${recipient?.name || "A recipient"}
-
-⏰ Time: ${new Date().toLocaleString()}
-`;
-
-    if (food.phone && food.notification_mode === "whatsapp") {
-      sendWhatsApp(food.phone, message);
-    }
-
-    res.json({ message: "Food claimed successfully. Please confirm pickup upon collection." });
+        sendWhatsApp(food.phone, message);
+      }
+    });
 
   } catch (err) {
     if (transactionStarted && client) {
@@ -223,6 +184,7 @@ Location: ${food.location}
         console.error("CLAIM ROLLBACK ERROR:", rollbackErr.message);
       }
     }
+
     console.error("CLAIM ERROR:", err);
     res.status(500).json({
       message: "Claim failed",
@@ -235,21 +197,16 @@ Location: ${food.location}
   }
 };
 
-// ============================
-// CONFIRM PICKUP
-// ============================
 exports.confirmPickup = async (req, res) => {
   try {
     const recipient_id = req.user.id;
     const { food_id } = req.body;
 
-    // Update claim status
     await db.query(
       `UPDATE claims SET status = 'picked_up', reservation_fee_paid = true WHERE food_id = $1 AND recipient_id = $2`,
       [food_id, recipient_id]
     );
 
-    // Update food pickup status
     await db.query(
       `UPDATE food_items SET pickup_status = 'picked_up' WHERE id = $1`,
       [food_id]
@@ -263,15 +220,12 @@ exports.confirmPickup = async (req, res) => {
   }
 };
 
-// ============================
-// MY CLAIMS (UPDATED)
-// ============================
 exports.getMyClaims = async (req, res) => {
   try {
     const recipient_id = req.user.id;
 
     const result = await db.query(
-      `SELECT 
+      `SELECT
           f.food_type,
           c.quantity,
           f.location,

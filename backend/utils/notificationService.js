@@ -24,7 +24,9 @@ const sendWhatsApp = async (phone, message) => {
   const normalizedPhone = normalizeWhatsAppPhone(phone);
 
   if (!normalizedPhone) {
-    console.warn(`WhatsApp skipped: invalid phone number "${phone}". Use international format, e.g. +256...`);
+    if (process.env.DEBUG_NOTIFICATIONS === "true") {
+      console.warn(`WhatsApp skipped: invalid phone number "${phone}". Use international format, e.g. +256...`);
+    }
     return;
   }
 

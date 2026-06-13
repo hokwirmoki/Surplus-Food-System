@@ -6,7 +6,7 @@ const updateExpiredFood = require("../../utils/foodExpiryUpdater");
 // View Impact
 exports.getImpactMetrics = async (req, res) => {
     try {
-        await updateExpiredFood({ force: true });
+        await updateExpiredFood();
         await expireVerificationBadges();
 
         const platesPerKg = 2;

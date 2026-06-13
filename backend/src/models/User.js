@@ -2,6 +2,20 @@ const db = require('../config/db');
 const bcrypt = require('bcrypt');
 const expireVerificationBadges = require('../../utils/verificationExpiry');
 
+function wait(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isTransientDbError(err) {
+    const message = String(err?.message || '').toLowerCase();
+    return (
+        message.includes('timeout') ||
+        message.includes('connection') ||
+        message.includes('remaining connection slots') ||
+        message.includes('too many clients')
+    );
+}
+
 class User {
     static async create({ name, email, password, role, phone, location, latitude, longitude, notification_mode }) {
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -28,28 +42,45 @@ class User {
     }
 
     static async findByEmail(email) {
-        const result = await db.query(
-            `SELECT
-                id,
-                name,
-                email,
-                password,
-                phone,
-                role,
-                location,
-                latitude,
-                longitude,
-                notification_mode,
-                verification_status,
-                verification_approved_at,
-                verification_expires_at,
-                is_verified
-             FROM users
-             WHERE email = $1`,
-            [email?.trim().toLowerCase()]
-        );
+        const normalizedEmail = email?.trim().toLowerCase();
+        let lastError;
 
-        return result.rows[0];
+        for (let attempt = 0; attempt < 2; attempt++) {
+            try {
+                const result = await db.query(
+                    `SELECT
+                        id,
+                        name,
+                        email,
+                        password,
+                        phone,
+                        role,
+                        location,
+                        latitude,
+                        longitude,
+                        notification_mode,
+                        verification_status,
+                        verification_approved_at,
+                        verification_expires_at,
+                        is_verified
+                     FROM users
+                     WHERE email = $1`,
+                    [normalizedEmail]
+                );
+
+                return result.rows[0];
+            } catch (err) {
+                lastError = err;
+
+                if (!isTransientDbError(err) || attempt === 1) {
+                    throw err;
+                }
+
+                await wait(150);
+            }
+        }
+
+        throw lastError;
     }
 
     static async findById(id) {
