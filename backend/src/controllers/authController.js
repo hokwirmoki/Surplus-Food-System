@@ -237,28 +237,70 @@ exports.updateProfile = async (req, res) => {
 // DELETE ACCOUNT
 // ========================
 exports.deleteAccount = async (req, res) => {
+  const client = await db.connect();
+
   try {
-    const db = require("../config/db");
     const userId = req.user.id;
 
-    await db.query(
-      `DELETE FROM donation_records WHERE recipient_id = $1 OR donor_id = $1`,
+    await client.query("BEGIN");
+
+    const donorFood = await client.query(
+      `SELECT id FROM food_items WHERE donor_id = $1`,
+      [userId]
+    );
+    const donorFoodIds = donorFood.rows.map((food) => food.id);
+
+    if (donorFoodIds.length > 0) {
+      await client.query(
+        `DELETE FROM transactions WHERE food_id = ANY($1::int[])`,
+        [donorFoodIds]
+      );
+
+      await client.query(
+        `DELETE FROM claims WHERE food_id = ANY($1::int[])`,
+        [donorFoodIds]
+      );
+
+      await client.query(
+        `DELETE FROM food_items WHERE id = ANY($1::int[])`,
+        [donorFoodIds]
+      );
+    }
+
+    await client.query(
+      `DELETE FROM claims WHERE recipient_id = $1`,
       [userId]
     );
 
-    await db.query(
-      `DELETE FROM food_items WHERE donor_id = $1`,
+    await client.query(
+      `UPDATE food_items SET claimed_by = NULL WHERE claimed_by = $1`,
       [userId]
     );
 
-    await db.query(
+    await client.query(
+      `DELETE FROM transactions WHERE user_id = $1`,
+      [userId]
+    );
+
+    await client.query(
+      `DELETE FROM user_activity WHERE user_id = $1`,
+      [userId]
+    );
+
+    await client.query(
       `DELETE FROM users WHERE id = $1`,
       [userId]
     );
 
+    await client.query("COMMIT");
+
     res.json({ message: "Account deleted successfully" });
 
   } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("DELETE ACCOUNT ERROR:", err.message);
     res.status(500).json({ error: "Failed to delete account" });
+  } finally {
+    client.release();
   }
 };
