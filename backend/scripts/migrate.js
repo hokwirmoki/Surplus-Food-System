@@ -119,6 +119,17 @@ async function migrate() {
             ON users (email)
         `);
 
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_users_role_notification_coords
+            ON users (role, notification_mode, latitude, longitude)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_food_items_available_coords
+            ON food_items (status, latitude, longitude, expiry_time)
+            WHERE status = 'available'
+        `);
+
         console.log('Migration completed');
     } catch (err) {
         console.error('Migration error:', err);

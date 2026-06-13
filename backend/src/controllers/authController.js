@@ -5,7 +5,7 @@ const db = require("../config/db");
 const logActivity = require("../../utils/activityLogger");
 const expireVerificationBadges = require("../../utils/verificationExpiry");
 
-const { sendWhatsApp } = require("../../utils/notificationService");
+const { sendWhatsApp, normalizeWhatsAppPhone } = require("../../utils/notificationService");
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 
@@ -16,6 +16,13 @@ exports.register = async (req, res) => {
     try {
         const { name, password, role, phone, location, latitude, longitude } = req.body;
         const email = req.body.email?.trim().toLowerCase();
+        const normalizedPhone = normalizeWhatsAppPhone(phone);
+
+        if (!normalizedPhone) {
+            return res.status(400).json({
+                message: "Use a WhatsApp number like +256700000000 or 0700000000"
+            });
+        }
 
         const existingUser = await User.findByEmail(email);
         if (existingUser) {
@@ -27,7 +34,7 @@ exports.register = async (req, res) => {
             email,
             password,
             role,
-            phone,
+            phone: normalizedPhone,
             location,
             latitude,
             longitude,
@@ -48,11 +55,15 @@ exports.register = async (req, res) => {
         );
 
         // SEND OTP VIA WHATSAPP
-        if (phone) {
-            await sendWhatsApp(
-                phone,
-                `Your SFS verification OTP is: ${otp}`
-            );
+        const otpResult = await sendWhatsApp(
+            normalizedPhone,
+            `Your SFS verification OTP is: ${otp}`
+        );
+
+        if (!otpResult.ok) {
+            return res.status(502).json({
+                message: "Account created, but OTP could not be sent. Check the WhatsApp number or Twilio setup."
+            });
         }
 
         res.status(201).json({

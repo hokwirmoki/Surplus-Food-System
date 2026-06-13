@@ -33,12 +33,6 @@ function AvailableFood() {
         return new Date(f.expiry_time) > now;
       });
 
-      validFoods.sort((a, b) => {
-        if (!a.expiry_time) return 1;
-        if (!b.expiry_time) return -1;
-        return new Date(a.expiry_time) - new Date(b.expiry_time);
-      });
-
       const newIds = validFoods.map((f) => f.id);
 
       const added = validFoods.filter(

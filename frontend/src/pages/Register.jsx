@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { toast } from "react-toastify";
@@ -28,9 +28,25 @@ function Register() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setForm((current) => ({
+          ...current,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        }));
+      },
+      () => {},
+      { enableHighAccuracy: false, timeout: 5000, maximumAge: 10 * 60 * 1000 }
+    );
+  }, []);
+
   const validateForm = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const phoneRegex = /^\+?[0-9]{9,15}$/;
+    const phoneRegex = /^(\+[1-9][0-9]{7,14}|0[0-9]{8,9})$/;
 
     if (!form.name.trim() || !form.email.trim() || !form.password.trim() || !form.phone.trim() || !form.location.trim()) {
       toast.error("Please complete all fields before registering.");
@@ -48,7 +64,7 @@ function Register() {
     }
 
     if (!phoneRegex.test(form.phone.trim())) {
-      toast.error("Please enter a valid phone number.");
+      toast.error("Use a WhatsApp number like +256700000000 or 0700000000.");
       return false;
     }
 
@@ -121,7 +137,7 @@ function Register() {
           <input name="name" value={form.name} placeholder="Full Name" onChange={handleChange} />
           <input name="email" type="email" value={form.email} placeholder="Email" onChange={handleChange} />
           <input name="password" type="password" value={form.password} placeholder="Password" onChange={handleChange} />
-          <input name="phone" value={form.phone} placeholder="Phone Number" onChange={handleChange} />
+          <input name="phone" value={form.phone} placeholder="WhatsApp Number (e.g., +256700000000 or 0700000000)" onChange={handleChange} />
           <input name="location" value={form.location} placeholder="Location (e.g., Kampala, Uganda)" onChange={handleChange} />
 
           <SelectMenu

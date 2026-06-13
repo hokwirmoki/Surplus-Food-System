@@ -4,6 +4,8 @@ const { sendWhatsApp } = require("../../utils/notificationService");
 const logActivity = require("../../utils/activityLogger");
 const expireVerificationBadges = require("../../utils/verificationExpiry");
 
+const NEARBY_RADIUS_KM = Number(process.env.NEARBY_RADIUS_KM || 10);
+
 exports.getAvailableFood = async (req, res) => {
   try {
     await updateExpiredFood();
@@ -22,20 +24,64 @@ exports.getAvailableFood = async (req, res) => {
       });
     }
 
-    const result = await db.query(`
-      SELECT
-        f.*,
-        u.name as donor_name,
-        (
-          u.verification_status = 'verified'
-          AND u.verification_expires_at IS NOT NULL
-          AND u.verification_expires_at > NOW()
-        ) as donor_verified
-      FROM food_items f
-      JOIN users u ON f.donor_id = u.id
-      WHERE f.status = 'available'
-      ORDER BY expiry_time ASC NULLS LAST
-    `);
+    const result = await db.query(
+      `WITH current_recipient AS (
+         SELECT latitude, longitude
+         FROM users
+         WHERE id = $1
+       ),
+       available_food AS (
+         SELECT
+           f.*,
+           u.name as donor_name,
+           (
+             u.verification_status = 'verified'
+             AND u.verification_expires_at IS NOT NULL
+             AND u.verification_expires_at > NOW()
+           ) as donor_verified,
+           CASE
+             WHEN cr.latitude IS NOT NULL
+              AND cr.longitude IS NOT NULL
+              AND f.latitude IS NOT NULL
+              AND f.longitude IS NOT NULL THEN
+               6371 * acos(
+                 LEAST(1, GREATEST(-1,
+                   cos(radians(cr.latitude)) *
+                   cos(radians(f.latitude)) *
+                   cos(radians(f.longitude) - radians(cr.longitude)) +
+                   sin(radians(cr.latitude)) *
+                   sin(radians(f.latitude))
+                 ))
+               )
+             ELSE NULL
+           END AS distance_km
+         FROM food_items f
+         JOIN users u ON f.donor_id = u.id
+         CROSS JOIN current_recipient cr
+         WHERE f.status = 'available'
+       ),
+       ranked_food AS (
+         SELECT
+           *,
+           EXISTS (
+             SELECT 1
+             FROM available_food
+             WHERE distance_km <= $2
+           ) AS has_nearby_food
+         FROM available_food
+       )
+       SELECT *
+       FROM ranked_food
+       ORDER BY
+         CASE
+           WHEN has_nearby_food AND distance_km <= $2 THEN 0
+           WHEN has_nearby_food THEN 1
+           ELSE 0
+         END,
+         distance_km ASC NULLS LAST,
+         expiry_time ASC NULLS LAST`,
+      [req.user.id, NEARBY_RADIUS_KM]
+    );
 
     res.json(result.rows);
 
@@ -172,7 +218,11 @@ exports.claimFood = async (req, res) => {
           `Time: ${new Date().toLocaleString()}`
         ].join("\n");
 
-        sendWhatsApp(food.phone, message);
+        sendWhatsApp(food.phone, message).then((result) => {
+          if (!result.ok) {
+            console.error("CLAIM NOTIFICATION SEND ERROR:", result.error);
+          }
+        });
       }
     });
 

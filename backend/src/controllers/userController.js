@@ -7,12 +7,21 @@ exports.updateUser = async (req, res) => {
     const user_id = req.user.id;
     const userRole = req.user.role;
 
-    let { name, email, phone, password, notification_mode, location } = req.body;
+    let { name, email, phone, password, notification_mode, location, latitude, longitude } = req.body;
 
     name = name?.trim() || null;
     email = email?.trim() || null;
     phone = phone?.trim() || null;
     location = location?.trim() || null;
+
+    const parsedLatitude = latitude === undefined || latitude === null || latitude === ""
+      ? null
+      : Number(latitude);
+    const parsedLongitude = longitude === undefined || longitude === null || longitude === ""
+      ? null
+      : Number(longitude);
+
+    const hasCoordinates = Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude);
 
     let hashedPassword = null;
 
@@ -57,6 +66,14 @@ exports.updateUser = async (req, res) => {
     if (location && userRole !== 'admin') {
       fields.push(`location = $${index++}`);
       values.push(location);
+
+      if (hasCoordinates) {
+        fields.push(`latitude = $${index++}`);
+        values.push(parsedLatitude);
+
+        fields.push(`longitude = $${index++}`);
+        values.push(parsedLongitude);
+      }
     }
 
     if (fields.length === 0) {
@@ -71,7 +88,7 @@ exports.updateUser = async (req, res) => {
       UPDATE users
       SET ${fields.join(", ")}
       WHERE id = $${index}
-      RETURNING id, name, email, phone, notification_mode, location
+      RETURNING id, name, email, phone, role, notification_mode, location, latitude, longitude
     `;
 
     const result = await db.query(query, values);

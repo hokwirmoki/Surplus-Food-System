@@ -18,6 +18,8 @@ function Profile() {
     phone: storedUser.phone || "",
     password: "",
     location: storedUser.location || "",
+    latitude: storedUser.latitude || null,
+    longitude: storedUser.longitude || null,
     notification_mode: storedUser.notification_mode || "whatsapp"
   });
   const [loading, setLoading] = useState(false);
@@ -42,6 +44,8 @@ function Profile() {
           phone: currentUser.phone || "",
           password: "",
           location: currentUser.location || "",
+          latitude: currentUser.latitude || null,
+          longitude: currentUser.longitude || null,
           notification_mode: currentUser.notification_mode || "whatsapp",
         });
         localStorage.setItem("user", JSON.stringify(currentUser));
@@ -54,7 +58,38 @@ function Profile() {
   }, [token]);
 
   const handleChange = (e) => {
+    if (e.target.name === "location") {
+      setForm({
+        ...form,
+        location: e.target.value,
+        latitude: null,
+        longitude: null
+      });
+      return;
+    }
+
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const geocodeLocation = async (location) => {
+    const query = location.trim();
+    if (!query) return null;
+
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`
+    );
+
+    if (!res.ok) return null;
+
+    const results = await res.json();
+    const match = results[0];
+
+    if (!match) return null;
+
+    return {
+      latitude: Number(match.lat),
+      longitude: Number(match.lon)
+    };
   };
 
   const handleUpdate = async () => {
@@ -83,7 +118,24 @@ function Profile() {
       };
 
       if (user?.role !== "admin") {
-        payload.location = form.location.trim() || undefined;
+        const nextLocation = form.location.trim();
+        payload.location = nextLocation || undefined;
+
+        if (nextLocation) {
+          const locationChanged = nextLocation !== (user?.location || "");
+          const needsCoordinates = !form.latitude || !form.longitude || locationChanged;
+          const coordinates = needsCoordinates
+            ? await geocodeLocation(nextLocation)
+            : { latitude: form.latitude, longitude: form.longitude };
+
+          if (!coordinates || !Number.isFinite(coordinates.latitude) || !Number.isFinite(coordinates.longitude)) {
+            toast.error("Could not find coordinates for that location. Please enter a more specific place.");
+            return;
+          }
+
+          payload.latitude = coordinates.latitude;
+          payload.longitude = coordinates.longitude;
+        }
       }
 
       const res = await API.put("/user/update", payload);
@@ -136,8 +188,10 @@ function Profile() {
           {user?.role !== "admin" && (
             <p><span>Location:</span> {user?.location || "Not set"}</p>
           )}
-          <p><span>Notifications:</span> {user?.notification_mode || "whatsapp"}</p>
-          {user?.verification_status === "verified" && (
+          {user?.role !== "admin" && (
+            <p><span>Notifications:</span> {user?.notification_mode || "whatsapp"}</p>
+          )}
+          {user?.role === "donor" && user?.verification_status === "verified" && (
             <>
               <p><span>Status:</span> Verified donor</p>
               <p><span>Badge expires:</span> {formatDate(user?.verification_expires_at) || "Not set"}</p>
@@ -192,14 +246,16 @@ function Profile() {
             />
           )}
 
-          <SelectMenu
-            value={form.notification_mode}
-            onChange={(notification_mode) => setForm({ ...form, notification_mode })}
-            options={[
-              { value: "whatsapp", label: "WhatsApp" },
-              { value: "sms", label: "SMS" }
-            ]}
-          />
+          {user?.role !== "admin" && (
+            <SelectMenu
+              value={form.notification_mode}
+              onChange={(notification_mode) => setForm({ ...form, notification_mode })}
+              options={[
+                { value: "whatsapp", label: "WhatsApp" },
+                { value: "sms", label: "SMS" }
+              ]}
+            />
+          )}
 
           <button
             className="btn-primary"

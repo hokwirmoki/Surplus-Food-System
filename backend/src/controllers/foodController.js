@@ -3,6 +3,8 @@ const updateExpiredFood = require("../../utils/foodExpiryUpdater");
 const { sendWhatsApp } = require("../../utils/notificationService");
 const logActivity = require("../../utils/activityLogger");
 
+const NEARBY_RADIUS_KM = Number(process.env.NEARBY_RADIUS_KM || 10);
+
 exports.postFood = async (req, res) => {
   try {
     const donor_id = req.user.id;
@@ -54,11 +56,60 @@ exports.postFood = async (req, res) => {
 
     setImmediate(async () => {
       try {
-        const recipients = await db.query(
-          `SELECT phone, notification_mode
-           FROM users
-           WHERE role = 'recipient'`
-        );
+        const hasFoodCoordinates = savedFood.latitude !== null && savedFood.longitude !== null;
+        const recipients = hasFoodCoordinates
+          ? await db.query(
+            `WITH recipients AS (
+               SELECT
+                 phone,
+                 notification_mode,
+                 latitude,
+                 longitude,
+                 CASE
+                   WHEN latitude IS NOT NULL AND longitude IS NOT NULL THEN
+                     6371 * acos(
+                       LEAST(1, GREATEST(-1,
+                         cos(radians($1::float)) *
+                         cos(radians(latitude)) *
+                         cos(radians(longitude) - radians($2::float)) +
+                         sin(radians($1::float)) *
+                         sin(radians(latitude))
+                       ))
+                     )
+                   ELSE NULL
+                 END AS distance_km
+               FROM users
+               WHERE role = 'recipient'
+                 AND notification_mode = 'whatsapp'
+                 AND phone IS NOT NULL
+                 AND (
+                   regexp_replace(phone, '[[:space:]]+', '', 'g') ~ '^[+][1-9][0-9]{7,14}$'
+                   OR regexp_replace(phone, '[[:space:]]+', '', 'g') ~ '^0[0-9]{8,9}$'
+                 )
+             ),
+             nearby AS (
+               SELECT * FROM recipients WHERE distance_km <= $3
+             )
+             SELECT phone, notification_mode, distance_km
+             FROM nearby
+             UNION ALL
+             SELECT phone, notification_mode, distance_km
+             FROM recipients
+             WHERE NOT EXISTS (SELECT 1 FROM nearby)
+             ORDER BY distance_km ASC NULLS LAST`,
+            [savedFood.latitude, savedFood.longitude, NEARBY_RADIUS_KM]
+          )
+          : await db.query(
+            `SELECT phone, notification_mode, NULL AS distance_km
+             FROM users
+             WHERE role = 'recipient'
+               AND notification_mode = 'whatsapp'
+               AND phone IS NOT NULL
+               AND (
+                 regexp_replace(phone, '[[:space:]]+', '', 'g') ~ '^[+][1-9][0-9]{7,14}$'
+                 OR regexp_replace(phone, '[[:space:]]+', '', 'g') ~ '^0[0-9]{8,9}$'
+               )`
+          );
 
         const mapLink = savedFood.latitude && savedFood.longitude
           ? `https://www.google.com/maps?q=${savedFood.latitude},${savedFood.longitude}`
@@ -76,7 +127,11 @@ exports.postFood = async (req, res) => {
 
         recipients.rows.forEach((recipient) => {
           if (recipient.phone && recipient.notification_mode === "whatsapp") {
-            sendWhatsApp(recipient.phone, message);
+            sendWhatsApp(recipient.phone, message).then((result) => {
+              if (!result.ok) {
+                console.error("FOOD NOTIFICATION SEND ERROR:", result.error);
+              }
+            });
           }
         });
       } catch (err) {

@@ -15,15 +15,16 @@ import DateTimePicker from "../components/DateTimePicker";
 function DonatePage() {
   const urlParams = new URLSearchParams(window.location.search);
   const isDiscounted = urlParams.get('discounted') === 'true';
+  const storedUser = JSON.parse(localStorage.getItem("user")) || {};
 
   const [form, setForm] = useState({
     food_type: "",
     quantity: "",
     expiry_time: "",
     price: "",
-    location: "",
-    lat: "",
-    lng: ""
+    location: storedUser.location || "",
+    lat: storedUser.latitude || "",
+    lng: storedUser.longitude || ""
   });
 
   const [foods, setFoods] = useState([]);
@@ -34,7 +35,38 @@ function DonatePage() {
   const itemsPerPage = 5;
 
   const handleChange = (e) => {
+    if (e.target.name === "location") {
+      setForm({
+        ...form,
+        location: e.target.value,
+        lat: "",
+        lng: ""
+      });
+      return;
+    }
+
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const geocodeLocation = async (location) => {
+    const query = location.trim();
+    if (!query) return null;
+
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`
+    );
+
+    if (!res.ok) return null;
+
+    const results = await res.json();
+    const match = results[0];
+
+    if (!match) return null;
+
+    return {
+      latitude: Number(match.lat),
+      longitude: Number(match.lon)
+    };
   };
 
   const validateFood = () => {
@@ -74,6 +106,15 @@ function DonatePage() {
     if (!validateFood()) return;
 
     try {
+      const coordinates = form.lat && form.lng
+        ? { latitude: Number(form.lat), longitude: Number(form.lng) }
+        : await geocodeLocation(form.location);
+
+      if (!coordinates || !Number.isFinite(coordinates.latitude) || !Number.isFinite(coordinates.longitude)) {
+        toast.error("Could not find coordinates for that location. Please enter a more specific place or pick it on the map.");
+        return;
+      }
+
       const payload = {
         food_type: form.food_type,
         quantity: form.quantity,
@@ -81,8 +122,8 @@ function DonatePage() {
         is_discounted: isDiscounted,
         price: isDiscounted ? form.price : null,
         location: form.location,
-        latitude: form.lat,
-        longitude: form.lng
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude
       };
 
       await API.post("/food/post", payload);
@@ -94,9 +135,9 @@ function DonatePage() {
         quantity: "",
         expiry_time: "",
         price: "",
-        location: "",
-        lat: "",
-        lng: ""
+        location: storedUser.location || "",
+        lat: storedUser.latitude || "",
+        lng: storedUser.longitude || ""
       });
 
       fetchFoods();
