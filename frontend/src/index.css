@@ -228,6 +228,28 @@ select option {
 	color: var(--green);
 }
 
+.select-menu-option.payment-option-mtn {
+	background: #fff3bf;
+	color: #5f4300;
+}
+
+.select-menu-option.payment-option-mtn:hover,
+.select-menu-option.payment-option-mtn.selected {
+	background: #ffd43b;
+	color: #3f2b00;
+}
+
+.select-menu-option.payment-option-airtel {
+	background: #ffe3e3;
+	color: #8f1010;
+}
+
+.select-menu-option.payment-option-airtel:hover,
+.select-menu-option.payment-option-airtel.selected {
+	background: #e03131;
+	color: #ffffff;
+}
+
 .status {
 	display: inline-flex;
 	align-items: center;

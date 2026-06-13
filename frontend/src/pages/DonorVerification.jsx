@@ -258,8 +258,8 @@ function DonorVerification() {
                 value={paymentProvider}
                 onChange={setPaymentProvider}
                 options={[
-                  { value: "MTN", label: "MTN" },
-                  { value: "Airtel", label: "Airtel" }
+                  { value: "MTN", label: "MTN", className: "payment-option-mtn" },
+                  { value: "Airtel", label: "Airtel", className: "payment-option-airtel" }
                 ]}
               />
 

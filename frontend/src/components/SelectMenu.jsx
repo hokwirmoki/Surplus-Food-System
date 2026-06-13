@@ -40,7 +40,11 @@ function SelectMenu({ value, options, onChange, placeholder = "Select", classNam
             <button
               type="button"
               key={option.value}
-              className={`select-menu-option ${option.value === value ? "selected" : ""}`}
+              className={[
+                "select-menu-option",
+                option.value === value ? "selected" : "",
+                option.className || ""
+              ].filter(Boolean).join(" ")}
               onClick={() => handleSelect(option.value)}
               role="option"
               aria-selected={option.value === value}
