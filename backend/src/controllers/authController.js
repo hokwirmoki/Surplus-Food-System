@@ -286,6 +286,11 @@ exports.deleteAccount = async (req, res) => {
 
     await client.query("BEGIN");
 
+    const donationRecordsTable = await client.query(
+      `SELECT to_regclass('public.donation_records') AS table_name`
+    );
+    const hasDonationRecords = Boolean(donationRecordsTable.rows[0]?.table_name);
+
     const donorFood = await client.query(
       `SELECT id FROM food_items WHERE donor_id = $1`,
       [userId]
@@ -300,6 +305,18 @@ exports.deleteAccount = async (req, res) => {
 
       await client.query(
         `DELETE FROM claims WHERE food_id = ANY($1::int[])`,
+        [donorFoodIds]
+      );
+
+      if (hasDonationRecords) {
+        await client.query(
+          `DELETE FROM donation_records WHERE food_id = ANY($1::int[])`,
+          [donorFoodIds]
+        );
+      }
+
+      await client.query(
+        `DELETE FROM payments WHERE food_id = ANY($1::int[])`,
         [donorFoodIds]
       );
 
@@ -321,6 +338,11 @@ exports.deleteAccount = async (req, res) => {
 
     await client.query(
       `DELETE FROM transactions WHERE user_id = $1`,
+      [userId]
+    );
+
+    await client.query(
+      `DELETE FROM payments WHERE user_id = $1`,
       [userId]
     );
 
