@@ -62,6 +62,7 @@ class User {
                         verification_status,
                         verification_approved_at,
                         verification_expires_at,
+                        otp_expires_at,
                         is_verified
                      FROM users
                      WHERE email = $1`,
@@ -98,6 +99,7 @@ class User {
                 verification_status,
                 verification_approved_at,
                 verification_expires_at,
+                otp_expires_at,
                 is_verified
              FROM users WHERE id = $1`,
             [id]

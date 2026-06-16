@@ -43,6 +43,8 @@ services:
         value: "+256"
       - key: PAYMENT_MODE
         value: sandbox
+      - key: OTP_EXPIRY_MINUTES
+        value: "2"
 
   - type: web
     name: surplus-food-system

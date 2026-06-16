@@ -19,6 +19,7 @@ async function migrate() {
                 verification_approved_at TIMESTAMP,
                 verification_expires_at TIMESTAMP,
                 otp_code INTEGER,
+                otp_expires_at TIMESTAMP,
                 is_verified BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
@@ -54,6 +55,7 @@ async function migrate() {
             ADD COLUMN IF NOT EXISTS verification_approved_at TIMESTAMP,
             ADD COLUMN IF NOT EXISTS verification_expires_at TIMESTAMP,
             ADD COLUMN IF NOT EXISTS otp_code INTEGER,
+            ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP,
             ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
             ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         `);
@@ -198,6 +200,12 @@ async function migrate() {
         await db.query(`
             CREATE INDEX IF NOT EXISTS idx_users_email
             ON users (email)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_users_unverified_otp_expiry
+            ON users (is_verified, otp_expires_at)
+            WHERE is_verified = false
         `);
 
         await db.query(`

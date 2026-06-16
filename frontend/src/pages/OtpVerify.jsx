@@ -14,6 +14,19 @@ function OtpVerify() {
   const navigate = useNavigate();
   const userId = localStorage.getItem("pendingUserId");
 
+  const handleOtpError = (err, fallbackMessage) => {
+    const message = err.response?.data?.message || fallbackMessage;
+
+    if (err.response?.status === 410) {
+      localStorage.removeItem("pendingUserId");
+      toast.error(message);
+      navigate("/register");
+      return;
+    }
+
+    toast.error(message);
+  };
+
   const resendOtp = async () => {
     if (!userId) {
       toast.error("No pending account found. Please register again.");
@@ -26,7 +39,7 @@ function OtpVerify() {
       const res = await API.post("/auth/resend-otp", { userId });
       toast.success(res.data.message || "OTP sent successfully.");
     } catch (err) {
-      toast.error(err.response?.data?.message || "OTP could not be resent");
+      handleOtpError(err, "OTP could not be resent");
     } finally {
       setLoading(false);
     }
@@ -59,7 +72,7 @@ function OtpVerify() {
       navigate("/login");
 
     } catch (err) {
-      toast.error(err.response?.data?.message || "OTP verification failed");
+      handleOtpError(err, "OTP verification failed");
     } finally {
       setLoading(false);
     }

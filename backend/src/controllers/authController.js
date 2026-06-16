@@ -8,15 +8,113 @@ const expireVerificationBadges = require("../../utils/verificationExpiry");
 const { sendWhatsApp, normalizeWhatsAppPhone } = require("../../utils/notificationService");
 
 const JWT_SECRET = process.env.JWT_SECRET || "secret123";
+const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 2);
+
+function hasOtpExpired(user) {
+    if (!user?.otp_expires_at) {
+        return false;
+    }
+
+    return new Date(user.otp_expires_at).getTime() <= Date.now();
+}
+
+async function deleteUserDependencies(client, userId) {
+  const donationRecordsTable = await client.query(
+    `SELECT to_regclass('public.donation_records') AS table_name`
+  );
+  const hasDonationRecords = Boolean(donationRecordsTable.rows[0]?.table_name);
+
+  const donorFood = await client.query(
+    `SELECT id FROM food_items WHERE donor_id = $1`,
+    [userId]
+  );
+  const donorFoodIds = donorFood.rows.map((food) => food.id);
+
+  if (donorFoodIds.length > 0) {
+    await client.query(
+      `DELETE FROM transactions WHERE food_id = ANY($1::int[])`,
+      [donorFoodIds]
+    );
+
+    await client.query(
+      `DELETE FROM claims WHERE food_id = ANY($1::int[])`,
+      [donorFoodIds]
+    );
+
+    if (hasDonationRecords) {
+      await client.query(
+        `DELETE FROM donation_records WHERE food_id = ANY($1::int[])`,
+        [donorFoodIds]
+      );
+    }
+
+    await client.query(
+      `DELETE FROM payments WHERE food_id = ANY($1::int[])`,
+      [donorFoodIds]
+    );
+
+    await client.query(
+      `DELETE FROM food_items WHERE id = ANY($1::int[])`,
+      [donorFoodIds]
+    );
+  }
+
+  await client.query(
+    `DELETE FROM claims WHERE recipient_id = $1`,
+    [userId]
+  );
+
+  await client.query(
+    `UPDATE food_items SET claimed_by = NULL WHERE claimed_by = $1`,
+    [userId]
+  );
+
+  await client.query(
+    `DELETE FROM transactions WHERE user_id = $1`,
+    [userId]
+  );
+
+  await client.query(
+    `DELETE FROM payments WHERE user_id = $1`,
+    [userId]
+  );
+
+  await client.query(
+    `DELETE FROM user_activity WHERE user_id = $1`,
+    [userId]
+  );
+
+  await client.query(
+    `DELETE FROM users WHERE id = $1`,
+    [userId]
+  );
+}
+
+async function deleteUserAccount(userId) {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+    await deleteUserDependencies(client, userId);
+    await client.query("COMMIT");
+  } catch (err) {
+    await client.query("ROLLBACK");
+    throw err;
+  } finally {
+    client.release();
+  }
+}
 
 async function issueOtp(userId, phone) {
     const otp = Math.floor(100000 + Math.random() * 900000);
 
     await db.query(
         `UPDATE users
-         SET otp_code = $1, is_verified = false
-         WHERE id = $2`,
-        [otp, userId]
+         SET otp_code = $1,
+             otp_expires_at = NOW() + ($2::int * INTERVAL '1 minute'),
+             is_verified = false
+         WHERE id = $3`,
+        [otp, OTP_EXPIRY_MINUTES, userId]
     );
 
     const result = await sendWhatsApp(
@@ -42,7 +140,14 @@ exports.register = async (req, res) => {
             });
         }
 
-        const existingUser = await User.findByEmail(email);
+        let existingUser = await User.findByEmail(email);
+        if (existingUser) {
+            if (!existingUser.is_verified && hasOtpExpired(existingUser)) {
+                await deleteUserAccount(existingUser.id);
+                existingUser = null;
+            }
+        }
+
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
         }
@@ -89,7 +194,7 @@ exports.resendOtp = async (req, res) => {
         }
 
         const result = await db.query(
-            `SELECT id, phone, is_verified FROM users WHERE id = $1`,
+            `SELECT id, phone, is_verified, otp_expires_at FROM users WHERE id = $1`,
             [userId]
         );
 
@@ -101,6 +206,13 @@ exports.resendOtp = async (req, res) => {
 
         if (user.is_verified) {
             return res.status(400).json({ message: "Account is already verified." });
+        }
+
+        if (hasOtpExpired(user)) {
+            await deleteUserAccount(user.id);
+            return res.status(410).json({
+                message: "OTP expired. Please register again."
+            });
         }
 
         const otpResult = await issueOtp(user.id, user.phone);
@@ -126,7 +238,7 @@ exports.verifyOtp = async (req, res) => {
         const { userId, otp } = req.body;
 
         const result = await db.query(
-            `SELECT otp_code FROM users WHERE id = $1`,
+            `SELECT id, otp_code, otp_expires_at, is_verified FROM users WHERE id = $1`,
             [userId]
         );
 
@@ -134,10 +246,18 @@ exports.verifyOtp = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const dbOtp = result.rows[0].otp_code;
+        const user = result.rows[0];
+        const dbOtp = user.otp_code;
 
         if (!dbOtp) {
             return res.status(400).json({ message: "OTP not found. Please request again." });
+        }
+
+        if (!user.is_verified && hasOtpExpired(user)) {
+            await deleteUserAccount(user.id);
+            return res.status(410).json({
+                message: "OTP expired. Please register again."
+            });
         }
 
         if (parseInt(otp) !== parseInt(dbOtp)) {
@@ -147,7 +267,7 @@ exports.verifyOtp = async (req, res) => {
         // MARK VERIFIED + CLEAR OTP
         await db.query(
             `UPDATE users 
-             SET is_verified = true, otp_code = NULL 
+             SET is_verified = true, otp_code = NULL, otp_expires_at = NULL
              WHERE id = $1`,
             [userId]
         );
@@ -185,6 +305,13 @@ exports.login = async (req, res) => {
 
         // BLOCK UNVERIFIED USERS
         if (!user.is_verified) {
+            if (hasOtpExpired(user)) {
+                await deleteUserAccount(user.id);
+                return res.status(410).json({
+                    message: "OTP expired. Please register again."
+                });
+            }
+
             return res.status(403).json({
                 message: "Account not verified. Please verify OTP first."
             });
