@@ -4,6 +4,7 @@ import { FiUser, FiLogOut } from "react-icons/fi";
 
 import logo from "../assets/sfsLogo.jpg";
 import profileImg from "../assets/profile.jpg";
+import { clearSession } from "../utils/session";
 import "../styles/navbar.css";
 
 function Navbar({ user, setUser }) {
@@ -23,8 +24,7 @@ function Navbar({ user, setUser }) {
       : "/";
 
   const logout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
+    clearSession();
     setUser(null);
     window.location.replace("/");
   };

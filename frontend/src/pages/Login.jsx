@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { toast } from "react-toastify";
+import { markSessionActivity } from "../utils/session";
 import "../styles/login.css";
 
 import { FiUsers, FiRefreshCw, FiGlobe } from "react-icons/fi";
@@ -31,6 +32,7 @@ function Login({ setUser }) {
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+      markSessionActivity();
 
       setUser(res.data.user);
 

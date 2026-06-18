@@ -54,6 +54,8 @@ services:
     envVars:
       - key: VITE_API_URL
         value: https://surplus-food-system-api.onrender.com/api
+      - key: VITE_IDLE_LOGOUT_MINUTES
+        value: "30"
     routes:
       - type: rewrite
         source: /*

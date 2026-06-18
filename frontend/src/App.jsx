@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import SessionTimeout from "./components/SessionTimeout.jsx";
 
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
@@ -29,6 +30,8 @@ function App() {
 
   return (
   <div className="app-layout">
+
+    <SessionTimeout user={user} setUser={setUser} />
 
     {user && <Navbar user={user} setUser={setUser} />}
 
