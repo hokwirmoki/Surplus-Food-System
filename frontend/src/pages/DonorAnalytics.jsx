@@ -17,7 +17,7 @@ function DonorAnalytics() {
     predictive: { bestPostingWindow: "11:00 - 14:00" }
   });
 
-  // FIX: use 1-based pagination (cleaner UI)
+
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
@@ -33,7 +33,7 @@ function DonorAnalytics() {
         predictive: { bestPostingWindow: "11:00 - 14:00" }
       });
 
-      // RESET PAGE AFTER FETCH (VERY IMPORTANT)
+      // RESET PAGE AFTER FETCH
       setPage(1);
 
     } catch (err) {

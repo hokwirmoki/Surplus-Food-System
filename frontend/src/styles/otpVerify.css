@@ -146,7 +146,7 @@
   color: var(--green-dark);
 }
 
-/* MISSION ITEMS (reuse pattern) */
+/* MISSION ITEMS */
 .mission-item {
   display: flex;
   align-items: center;

@@ -13,14 +13,14 @@ import { registerServiceWorker } from "./registerServiceWorker";
 registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  // ❌ REMOVE StrictMode (this is the root cause)
+
   <BrowserRouter>
     <App />
 
     <ToastContainer
       position="top-right"
       autoClose={2000}
-      limit={1}              // ✅ only one toast at a time
+      limit={1}              
       newestOnTop
       closeOnClick
       pauseOnHover

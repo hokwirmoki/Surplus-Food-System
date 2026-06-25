@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
-import "../styles/donorAnalytics.css"; // Reuse styling
+import "../styles/donorAnalytics.css"; 
 
 function ViewImpact() {
   const [metrics, setMetrics] = useState({});

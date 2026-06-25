@@ -33,7 +33,7 @@ function VerifyUsers() {
         { userId, status }
       );
       toast.success(`User ${status}`);
-      fetchUsers(); // Refresh
+      fetchUsers(); 
     } catch {
       toast.error("Failed to update verification");
     }

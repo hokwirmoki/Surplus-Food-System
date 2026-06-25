@@ -59,7 +59,7 @@ function MyClaims() {
       await API.post("/recipient/confirm-pickup", { food_id });
 
       toast.success("Pickup confirmed!");
-      fetchClaims(); // Refresh
+      fetchClaims(); 
 
     } catch {
       toast.error("Failed to confirm pickup");

@@ -8,7 +8,7 @@ import {
 import { useState, useEffect } from "react";
 import L from "leaflet";
 
-// fix leaflet default icons
+
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
@@ -21,7 +21,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow
 });
 
-// 🔥 Fix blank map inside modal
+
 function ResizeMap() {
   const map = useMap();
 
@@ -34,7 +34,7 @@ function ResizeMap() {
   return null;
 }
 
-// 📍 click handler
+// click handler
 function MapClickHandler({ setPosition, setAddress }) {
   useMapEvents({
     click(e) {
@@ -91,7 +91,7 @@ export default function LeafletLocationPicker({ onSelect }) {
       >
         <ResizeMap />
 
-        {/* ✅ FIXED TILE SERVER (Carto CDN) */}
+        {/* TILE SERVER (Carto CDN) */}
         <TileLayer
           attribution="&copy; OpenStreetMap & Carto"
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -102,7 +102,7 @@ export default function LeafletLocationPicker({ onSelect }) {
           setAddress={setAddress}
         />
 
-        {/* 📍 draggable marker */}
+        {/* draggable marker */}
         <Marker
           position={position}
           draggable={true}
@@ -132,7 +132,7 @@ export default function LeafletLocationPicker({ onSelect }) {
       </MapContainer>
 
       <p style={{ marginTop: 10 }}>
-        📍 Selected: {address || "Click or drag pin"}
+        Selected: {address || "Click or drag pin"}
       </p>
     </div>
   );

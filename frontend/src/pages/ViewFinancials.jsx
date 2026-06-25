@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
 import { formatMoney } from "../utils/formatMoney";
-import "../styles/donorAnalytics.css"; // Reuse styling
+import "../styles/donorAnalytics.css"; 
 
 function ViewFinancials() {
   const [financials, setFinancials] = useState({});

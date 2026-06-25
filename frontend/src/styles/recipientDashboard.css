@@ -127,7 +127,6 @@ hr {
   vertical-align: middle;
 }
 
-/* make buttons align icon + text nicely */
 .btn-primary,
 .btn-secondary {
   display: flex;

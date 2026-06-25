@@ -78,7 +78,7 @@ function Login({ setUser }) {
           Connecting donors to people in need.
         </p>
 
-        {/* MISSION SECTION (SAFE ICONS) */}
+        {/* MISSION SECTION */}
         <div className="login-mission">
 
           <div className="mission-item">
