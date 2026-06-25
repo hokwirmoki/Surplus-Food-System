@@ -22,6 +22,7 @@ function Navbar({ user, setUser }) {
       : currentUser?.role === "admin"
       ? "/admin"
       : "/";
+  const showHelpLine = ["donor", "recipient"].includes(currentUser?.role);
 
   const logout = () => {
     clearSession();
@@ -79,6 +80,13 @@ function Navbar({ user, setUser }) {
               My Claims
             </p>
           </>
+        )}
+
+        {showHelpLine && (
+          <div className="navbar-helpline" aria-label="Help line">
+            <span>Help Line</span>
+            <strong>+256 700 000 000</strong>
+          </div>
         )}
 
         {user?.role === "admin" && (

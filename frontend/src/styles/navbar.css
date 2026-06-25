@@ -50,6 +50,31 @@
   color: var(--green);
 }
 
+.navbar-helpline {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 5px 10px;
+  border: 1px solid rgba(46, 125, 58, 0.18);
+  border-radius: 8px;
+  background: var(--surface-alt);
+  color: var(--green-dark);
+  line-height: 1.15;
+}
+
+.navbar-helpline span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.navbar-helpline strong {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* PROFILE */
 .profile-container {
   position: relative;
@@ -159,6 +184,10 @@
     border-bottom: 1px solid var(--border);
 
     display: none;
+  }
+
+  .navbar-helpline {
+    width: 100%;
   }
 
   .navbar-right.active {
