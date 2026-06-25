@@ -37,9 +37,7 @@ function normalizeWhatsAppPhone(phone) {
   return null;
 }
 
-// ==============================
 // WHATSAPP (ACTIVE)
-// ==============================
 const sendWhatsApp = async (phone, message) => {
   const normalizedPhone = normalizeWhatsAppPhone(phone);
   const sender = getWhatsAppSender();

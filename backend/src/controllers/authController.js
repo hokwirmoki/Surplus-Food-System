@@ -125,9 +125,7 @@ async function issueOtp(userId, phone) {
     return result;
 }
 
-// ========================
 // REGISTER (WITH DB OTP)
-// ========================
 exports.register = async (req, res) => {
     try {
         const { name, password, role, phone, location, latitude, longitude } = req.body;
@@ -230,9 +228,7 @@ exports.resendOtp = async (req, res) => {
     }
 };
 
-// ========================
 // VERIFY OTP (DB BASED)
-// ========================
 exports.verifyOtp = async (req, res) => {
     try {
         const { userId, otp } = req.body;
@@ -279,9 +275,7 @@ exports.verifyOtp = async (req, res) => {
     }
 };
 
-// ========================
 // LOGIN (BLOCK UNVERIFIED)
-// ========================
 exports.login = async (req, res) => {
     try {
         setImmediate(() => {
@@ -356,9 +350,7 @@ exports.login = async (req, res) => {
     }
 };
 
-// ========================
 // UPDATE PROFILE
-// ========================
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -402,9 +394,7 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// ========================
 // DELETE ACCOUNT
-// ========================
 exports.deleteAccount = async (req, res) => {
   const client = await db.connect();
 

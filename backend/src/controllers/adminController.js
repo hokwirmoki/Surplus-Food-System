@@ -28,7 +28,7 @@ exports.getImpactMetrics = async (req, res) => {
             const totalFoodClaimedKg = totalFoodClaimedPlates / platesPerKg;
             const totalFoodDonatedKg = totalFoodClaimedKg;
 
-        // Total people helped (unique recipients with successful claims)
+        // Total people helped
         const peopleHelpedResult = await db.query(
             "SELECT COUNT(DISTINCT recipient_id) as count FROM claims WHERE status IN ('claimed', 'picked_up')"
         );
@@ -109,7 +109,6 @@ exports.getFinancials = async (req, res) => {
         const discountedFoodSales = parseFloat(discountedFoodSalesResult.rows[0].total || 0);
 
         // Commission is 5% of successfully claimed discounted food only.
-        // Derive it from purchase transactions so old posting-time commission rows do not inflate reports.
         const commissions = Number((discountedFoodSales * 0.05).toFixed(2));
 
         res.json({

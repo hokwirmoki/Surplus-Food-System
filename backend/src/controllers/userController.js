@@ -144,9 +144,7 @@ exports.getCurrentUser = async (req, res) => {
   }
 };
 
-// ============================
 // DONOR VERIFICATION APPLICATION
-// ============================
 exports.applyForVerification = async (req, res) => {
   const client = await db.connect();
 
