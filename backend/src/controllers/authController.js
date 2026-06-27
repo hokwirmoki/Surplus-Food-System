@@ -18,6 +18,19 @@ function normalizeFoodTypes(value) {
         .filter(Boolean);
 }
 
+function normalizeDietaryPreferences(value, avoidPork) {
+    const allowed = new Set(["vegan", "vegetarian", "meat_only", "avoid_pork"]);
+    const preferences = Array.isArray(value)
+        ? value.map((item) => String(item || "").trim()).filter((item) => allowed.has(item))
+        : [];
+
+    if (avoidPork === true && !preferences.includes("avoid_pork")) {
+        preferences.push("avoid_pork");
+    }
+
+    return [...new Set(preferences)];
+}
+
 function hasOtpExpired(user) {
     if (!user?.otp_expires_at) {
         return false;
@@ -136,11 +149,14 @@ async function issueOtp(userId, phone) {
 // REGISTER (WITH DB OTP)
 exports.register = async (req, res) => {
     try {
-        const { name, password, role, phone, location, latitude, longitude, food_notifications_enabled } = req.body;
+        const { name, password, role, phone, location, latitude, longitude, food_notifications_enabled, avoid_pork } = req.body;
         const email = req.body.email?.trim().toLowerCase();
         const normalizedPhone = normalizeWhatsAppPhone(phone);
         const preferredFoodTypes = role === "recipient"
             ? normalizeFoodTypes(req.body.preferred_food_types)
+            : [];
+        const dietaryPreferences = role === "recipient"
+            ? normalizeDietaryPreferences(req.body.dietary_preferences, avoid_pork)
             : [];
 
         if (!normalizedPhone) {
@@ -172,7 +188,9 @@ exports.register = async (req, res) => {
             longitude,
             notification_mode: 'whatsapp',
             preferred_food_types: preferredFoodTypes,
-            food_notifications_enabled: role === "recipient" ? food_notifications_enabled !== false : true
+            dietary_preferences: dietaryPreferences,
+            food_notifications_enabled: role === "recipient" ? food_notifications_enabled !== false : true,
+            avoid_pork: role === "recipient" ? dietaryPreferences.includes("avoid_pork") : false
         });
 
         const otpResult = await issueOtp(user.id, normalizedPhone);
@@ -344,7 +362,9 @@ exports.login = async (req, res) => {
                 longitude: user.longitude,
                 notification_mode: user.notification_mode || "whatsapp",
                 preferred_food_types: user.preferred_food_types || [],
+                dietary_preferences: user.dietary_preferences || [],
                 food_notifications_enabled: user.food_notifications_enabled !== false,
+                avoid_pork: user.avoid_pork === true || (user.dietary_preferences || []).includes("avoid_pork"),
                 verification_status: user.verification_status,
                 verification_approved_at: user.verification_approved_at,
                 verification_expires_at: user.verification_expires_at
@@ -371,13 +391,19 @@ exports.updateProfile = async (req, res) => {
     const userId = req.user.id;
     const db = require("../config/db");
 
-    const { name, email, phone, password, notification_mode, preferred_food_types, food_notifications_enabled } = req.body;
+    const { name, email, phone, password, notification_mode, preferred_food_types, dietary_preferences, food_notifications_enabled, avoid_pork } = req.body;
     const nextPreferredFoodTypes = preferred_food_types === undefined
       ? null
       : normalizeFoodTypes(preferred_food_types);
     const nextFoodNotificationsEnabled = food_notifications_enabled === undefined
       ? null
       : food_notifications_enabled !== false;
+    const nextDietaryPreferences = dietary_preferences === undefined
+      ? null
+      : normalizeDietaryPreferences(dietary_preferences, avoid_pork);
+    const nextAvoidPork = avoid_pork === undefined && nextDietaryPreferences === null
+      ? null
+      : avoid_pork === true || nextDietaryPreferences?.includes("avoid_pork");
 
     let hashedPassword = null;
 
@@ -395,9 +421,11 @@ exports.updateProfile = async (req, res) => {
         password = COALESCE($4, password),
         notification_mode = COALESCE($5, notification_mode),
         preferred_food_types = COALESCE($6, preferred_food_types),
-        food_notifications_enabled = COALESCE($7, food_notifications_enabled)
-      WHERE id = $8
-      RETURNING id, name, email, phone, role, notification_mode, preferred_food_types, food_notifications_enabled
+        dietary_preferences = COALESCE($7, dietary_preferences),
+        food_notifications_enabled = COALESCE($8, food_notifications_enabled),
+        avoid_pork = COALESCE($9, avoid_pork)
+      WHERE id = $10
+      RETURNING id, name, email, phone, role, notification_mode, preferred_food_types, dietary_preferences, food_notifications_enabled, avoid_pork
       `,
       [
         name || "",
@@ -406,7 +434,9 @@ exports.updateProfile = async (req, res) => {
         hashedPassword,
         notification_mode || null,
         nextPreferredFoodTypes,
+        nextDietaryPreferences,
         nextFoodNotificationsEnabled,
+        nextAvoidPork,
         userId
       ]
     );

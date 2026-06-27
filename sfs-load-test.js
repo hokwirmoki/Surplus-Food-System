@@ -90,7 +90,10 @@ export default function (tokens) {
   reportFailure('available food', availableBefore);
 
   const postedFood = postJson('/api/food/post', {
-    food_type: `System Check Meal ${marker}`,
+    food_type: 'Cooked Meals',
+    food_description: `System check meal ${marker}`,
+    dietary_type: 'meat',
+    contains_pork: false,
     quantity: 2,
     expiry_time: expiry,
     location: 'Kampala Central',

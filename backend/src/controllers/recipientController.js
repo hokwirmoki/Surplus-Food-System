@@ -30,7 +30,7 @@ exports.getAvailableFood = async (req, res) => {
 
     const result = await db.query(
       `WITH current_recipient AS (
-         SELECT latitude, longitude, preferred_food_types
+         SELECT latitude, longitude, preferred_food_types, dietary_preferences, avoid_pork
          FROM users
          WHERE id = $1
        ),
@@ -66,6 +66,16 @@ exports.getAvailableFood = async (req, res) => {
            AND (
              COALESCE(array_length(cr.preferred_food_types, 1), 0) = 0
              OR f.food_type = ANY(cr.preferred_food_types)
+           )
+           AND NOT ((cr.avoid_pork = true OR 'avoid_pork' = ANY(cr.dietary_preferences)) AND f.contains_pork = true)
+           AND (
+             COALESCE(array_length(cr.dietary_preferences, 1), 0) = 0
+             OR (
+               (NOT ('vegan' = ANY(cr.dietary_preferences)) OR 'vegan' = ANY(COALESCE(f.dietary_tags, '{}'::text[])))
+               AND (NOT ('vegetarian' = ANY(cr.dietary_preferences)) OR 'vegetarian' = ANY(COALESCE(f.dietary_tags, '{}'::text[])) OR 'vegan' = ANY(COALESCE(f.dietary_tags, '{}'::text[])))
+               AND (NOT ('meat_only' = ANY(cr.dietary_preferences)) OR 'meat' = ANY(COALESCE(f.dietary_tags, '{}'::text[])) OR 'pork' = ANY(COALESCE(f.dietary_tags, '{}'::text[])))
+               AND (NOT ('avoid_pork' = ANY(cr.dietary_preferences)) OR NOT ('pork' = ANY(COALESCE(f.dietary_tags, '{}'::text[]))))
+             )
            )
        ),
        ranked_food AS (
@@ -313,6 +323,9 @@ exports.getMyClaims = async (req, res) => {
     const result = await db.query(
       `SELECT
           f.food_type,
+          f.food_description,
+          f.dietary_tags,
+          f.contains_pork,
           c.quantity,
           f.location,
           u.name as donor_name,

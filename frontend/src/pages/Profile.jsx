@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { FaCheckCircle } from "react-icons/fa";
 import SelectMenu from "../components/SelectMenu";
 import { FOOD_CATEGORIES } from "../constants/foodCategories";
+import { RECIPIENT_DIETARY_PREFERENCES } from "../constants/dietaryOptions";
 import "../styles/profile.css";
 
 import profileImg from "../assets/profile.jpg";
@@ -23,7 +24,9 @@ function Profile() {
     longitude: storedUser.longitude || null,
     notification_mode: storedUser.notification_mode || "whatsapp",
     preferred_food_types: storedUser.preferred_food_types || [],
-    food_notifications_enabled: storedUser.food_notifications_enabled !== false
+    dietary_preferences: storedUser.dietary_preferences || (storedUser.avoid_pork ? ["avoid_pork"] : []),
+    food_notifications_enabled: storedUser.food_notifications_enabled !== false,
+    avoid_pork: storedUser.avoid_pork === true
   });
   const [loading, setLoading] = useState(false);
 
@@ -51,7 +54,9 @@ function Profile() {
           longitude: currentUser.longitude || null,
           notification_mode: currentUser.notification_mode || "whatsapp",
           preferred_food_types: currentUser.preferred_food_types || [],
-          food_notifications_enabled: currentUser.food_notifications_enabled !== false
+          dietary_preferences: currentUser.dietary_preferences || (currentUser.avoid_pork ? ["avoid_pork"] : []),
+          food_notifications_enabled: currentUser.food_notifications_enabled !== false,
+          avoid_pork: currentUser.avoid_pork === true
         });
         localStorage.setItem("user", JSON.stringify(currentUser));
       } catch (err) {
@@ -87,6 +92,43 @@ function Profile() {
           : [...current.preferred_food_types, foodType]
       };
     });
+  };
+
+  const toggleDietaryPreference = (preference) => {
+    setForm((current) => {
+      const selected = current.dietary_preferences.includes(preference);
+      let nextPreferences = selected
+        ? current.dietary_preferences.filter((item) => item !== preference)
+        : [...current.dietary_preferences, preference];
+
+      if (!selected && preference === "vegan") {
+        nextPreferences = nextPreferences.filter((item) => item !== "vegetarian" && item !== "meat_only");
+      }
+
+      if (!selected && preference === "vegetarian") {
+        nextPreferences = nextPreferences.filter((item) => item !== "vegan" && item !== "meat_only");
+      }
+
+      if (!selected && preference === "meat_only") {
+        nextPreferences = nextPreferences.filter((item) => item !== "vegan" && item !== "vegetarian");
+      }
+
+      nextPreferences = [...new Set(nextPreferences)];
+
+      return {
+        ...current,
+        dietary_preferences: nextPreferences,
+        avoid_pork: nextPreferences.includes("avoid_pork")
+      };
+    });
+  };
+
+  const formatDietaryPreferences = (preferences = []) => {
+    if (!preferences.length) return "No dietary restriction";
+
+    return preferences
+      .map((preference) => RECIPIENT_DIETARY_PREFERENCES.find((option) => option.value === preference)?.label || preference)
+      .join(", ");
   };
 
   const geocodeLocation = async (location) => {
@@ -137,7 +179,9 @@ function Profile() {
 
       if (user?.role === "recipient") {
         payload.preferred_food_types = form.preferred_food_types;
+        payload.dietary_preferences = form.dietary_preferences;
         payload.food_notifications_enabled = form.food_notifications_enabled;
+        payload.avoid_pork = form.avoid_pork;
       }
 
       if (user?.role !== "admin") {
@@ -220,6 +264,9 @@ function Profile() {
           {user?.role === "recipient" && (
             <p><span>Food preferences:</span> {(user?.preferred_food_types || []).join(", ") || "All food"}</p>
           )}
+          {user?.role === "recipient" && (
+            <p><span>Dietary:</span> {formatDietaryPreferences(user?.dietary_preferences || (user?.avoid_pork ? ["avoid_pork"] : []))}</p>
+          )}
           {user?.role === "donor" && user?.verification_status === "verified" && (
             <>
               <p><span>Status:</span> Verified donor</p>
@@ -296,6 +343,19 @@ function Profile() {
                       type="checkbox"
                       checked={form.preferred_food_types.includes(option.value)}
                       onChange={() => toggleFoodPreference(option.value)}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="form-label">Dietary needs</p>
+              <div className="preference-grid">
+                {RECIPIENT_DIETARY_PREFERENCES.map((option) => (
+                  <label key={option.value} className="preference-check">
+                    <input
+                      type="checkbox"
+                      checked={form.dietary_preferences.includes(option.value)}
+                      onChange={() => toggleDietaryPreference(option.value)}
                     />
                     <span>{option.label}</span>
                   </label>

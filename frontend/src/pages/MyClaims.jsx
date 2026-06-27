@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
+import { getDietaryLabel } from "../constants/dietaryOptions";
 
 import {
   FaCheckCircle,
@@ -92,6 +93,9 @@ function MyClaims() {
                   <tr>
                     <th>Food</th>
                     <th>Donor</th>
+                    <th>Description</th>
+                    <th>Dietary</th>
+                    <th>Pork</th>
                     <th>Quantity</th>
                     <th>Location</th>
                     <th>Claimed At</th>
@@ -104,6 +108,9 @@ function MyClaims() {
                     <tr key={`${c.food_id}-${c.claimed_at || i}`}>
                       <td>{c.food_type}</td>
                       <td>{c.donor_name || "Unknown donor"}</td>
+                      <td>{c.food_description || "Not specified"}</td>
+                      <td>{getDietaryLabel(c.dietary_tags)}</td>
+                      <td>{c.contains_pork ? "Contains pork" : "No pork"}</td>
                       <td>{c.quantity}</td>
                       <td>{c.location}</td>
                       <td>

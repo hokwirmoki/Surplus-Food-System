@@ -56,6 +56,10 @@
   color: var(--green-dark);
 }
 
+.food-description {
+  line-height: 1.5;
+}
+
 .location,
 .donor-name,
 .expiry,

@@ -15,7 +15,9 @@ async function migrate() {
                 longitude DOUBLE PRECISION,
                 notification_mode TEXT DEFAULT 'whatsapp',
                 preferred_food_types TEXT[] DEFAULT '{}',
+                dietary_preferences TEXT[] DEFAULT '{}',
                 food_notifications_enabled BOOLEAN DEFAULT TRUE,
+                avoid_pork BOOLEAN DEFAULT FALSE,
                 verification_status TEXT DEFAULT 'unverified',
                 documents JSONB,
                 verification_approved_at TIMESTAMP,
@@ -32,10 +34,13 @@ async function migrate() {
                 id SERIAL PRIMARY KEY,
                 donor_id INTEGER REFERENCES users(id),
                 food_type TEXT NOT NULL,
+                food_description TEXT,
+                dietary_tags TEXT[] DEFAULT '{}',
                 quantity VARCHAR(50) NOT NULL,
                 location TEXT,
                 expiry_time TIMESTAMP,
                 status TEXT DEFAULT 'available',
+                contains_pork BOOLEAN DEFAULT FALSE,
                 is_discounted BOOLEAN DEFAULT FALSE,
                 discount_price DECIMAL(10,2),
                 claimed_by INTEGER REFERENCES users(id),
@@ -53,7 +58,9 @@ async function migrate() {
             ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION,
             ADD COLUMN IF NOT EXISTS notification_mode TEXT DEFAULT 'whatsapp',
             ADD COLUMN IF NOT EXISTS preferred_food_types TEXT[] DEFAULT '{}',
+            ADD COLUMN IF NOT EXISTS dietary_preferences TEXT[] DEFAULT '{}',
             ADD COLUMN IF NOT EXISTS food_notifications_enabled BOOLEAN DEFAULT TRUE,
+            ADD COLUMN IF NOT EXISTS avoid_pork BOOLEAN DEFAULT FALSE,
             ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'unverified',
             ADD COLUMN IF NOT EXISTS documents JSONB,
             ADD COLUMN IF NOT EXISTS verification_approved_at TIMESTAMP,
@@ -66,6 +73,9 @@ async function migrate() {
 
         await db.query(`
             ALTER TABLE food_items
+            ADD COLUMN IF NOT EXISTS food_description TEXT,
+            ADD COLUMN IF NOT EXISTS dietary_tags TEXT[] DEFAULT '{}',
+            ADD COLUMN IF NOT EXISTS contains_pork BOOLEAN DEFAULT FALSE,
             ADD COLUMN IF NOT EXISTS is_discounted BOOLEAN DEFAULT FALSE,
             ADD COLUMN IF NOT EXISTS discount_price DECIMAL(10,2),
             ADD COLUMN IF NOT EXISTS claimed_by INTEGER REFERENCES users(id),
@@ -220,6 +230,16 @@ async function migrate() {
         await db.query(`
             CREATE INDEX IF NOT EXISTS idx_users_preferred_food_types
             ON users USING GIN (preferred_food_types)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_users_dietary_preferences
+            ON users USING GIN (dietary_preferences)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_food_items_dietary_tags
+            ON food_items USING GIN (dietary_tags)
         `);
 
         await db.query(`

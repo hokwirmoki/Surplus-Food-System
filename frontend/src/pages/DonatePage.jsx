@@ -13,6 +13,7 @@ import LeafletLocationPicker from "../components/LeafletMapPicker";
 import DateTimePicker from "../components/DateTimePicker";
 import SelectMenu from "../components/SelectMenu";
 import { FOOD_CATEGORIES } from "../constants/foodCategories";
+import { FOOD_DIETARY_TYPES, getDietaryLabel } from "../constants/dietaryOptions";
 
 const MIN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 const EXPIRY_ERROR_MESSAGE = "Expiry time must be more than 5 minutes from now.";
@@ -53,6 +54,9 @@ function DonatePage() {
 
   const [form, setForm] = useState({
     food_type: "",
+    food_description: "",
+    dietary_type: "",
+    contains_pork: "",
     quantity: "",
     expiry_time: "",
     price: "",
@@ -106,8 +110,13 @@ function DonatePage() {
   };
 
   const validateFood = () => {
-    if (!form.food_type.trim() || !form.quantity.trim() || !form.expiry_time) {
-      toast.error("Please fill in food type, quantity and expiry time.");
+    if (!form.food_type.trim() || !form.food_description.trim() || !form.dietary_type || !form.quantity.trim() || !form.expiry_time) {
+      toast.error("Please fill in food category, description, dietary type, quantity and expiry time.");
+      return false;
+    }
+
+    if (form.contains_pork === "") {
+      toast.error("Please specify whether the food contains pork.");
       return false;
     }
 
@@ -203,6 +212,14 @@ function DonatePage() {
     setForm({ ...form, expiry_time });
   };
 
+  const handleDietaryTypeChange = (dietary_type) => {
+    setForm({
+      ...form,
+      dietary_type,
+      contains_pork: dietary_type === "meat" ? form.contains_pork : "false"
+    });
+  };
+
   const formatDate = (date) => {
     if (!date) return "No expiry";
     return new Date(date).toLocaleString();
@@ -223,6 +240,9 @@ function DonatePage() {
 
       const payload = {
         food_type: form.food_type,
+        food_description: form.food_description,
+        dietary_type: form.dietary_type,
+        contains_pork: form.contains_pork === "true",
         quantity: form.quantity,
         expiry_time: form.expiry_time,
         is_discounted: isDiscounted,
@@ -238,6 +258,9 @@ function DonatePage() {
 
       setForm({
         food_type: "",
+        food_description: "",
+        dietary_type: "",
+        contains_pork: "",
         quantity: "",
         expiry_time: "",
         price: "",
@@ -300,6 +323,34 @@ function DonatePage() {
             onChange={(food_type) => setForm({ ...form, food_type })}
             options={FOOD_CATEGORIES}
             placeholder="Food Category"
+            className="donate-select"
+          />
+
+          <textarea
+            name="food_description"
+            value={form.food_description}
+            placeholder="Describe the food, ingredients, condition or packaging"
+            onChange={handleChange}
+          />
+
+          <SelectMenu
+            value={form.dietary_type}
+            onChange={handleDietaryTypeChange}
+            options={FOOD_DIETARY_TYPES}
+            placeholder="Dietary Type"
+            className="donate-select"
+          />
+
+          <SelectMenu
+            value={form.contains_pork}
+            onChange={(contains_pork) => setForm({ ...form, contains_pork })}
+            options={form.dietary_type === "meat"
+              ? [
+                { value: "false", label: "No pork" },
+                { value: "true", label: "Contains pork" }
+              ]
+              : [{ value: "false", label: "No pork" }]}
+            placeholder="Pork Content"
             className="donate-select"
           />
 
@@ -367,6 +418,9 @@ function DonatePage() {
             <thead>
               <tr>
                 <th>Food</th>
+                <th>Description</th>
+                <th>Dietary</th>
+                <th>Pork</th>
                 <th>Qty</th>
                 <th>Price</th>
                 <th>Expiry</th>
@@ -378,6 +432,9 @@ function DonatePage() {
               {currentFoods.map((food) => (
                 <tr key={food.id}>
                   <td>{food.food_type}</td>
+                  <td>{food.food_description || "Not specified"}</td>
+                  <td>{getDietaryLabel(food.dietary_tags)}</td>
+                  <td>{food.contains_pork ? "Contains pork" : "No pork"}</td>
                   <td>{food.quantity}</td>
                   <td>{food.discount_price ? formatUGX(food.discount_price) : 'Free'}</td>
                   <td>{formatDate(food.expiry_time)}</td>

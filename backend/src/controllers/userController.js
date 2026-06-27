@@ -14,12 +14,25 @@ function normalizeFoodTypes(value) {
     .filter(Boolean);
 }
 
+function normalizeDietaryPreferences(value, avoidPork) {
+  const allowed = new Set(["vegan", "vegetarian", "meat_only", "avoid_pork"]);
+  const preferences = Array.isArray(value)
+    ? value.map((item) => String(item || "").trim()).filter((item) => allowed.has(item))
+    : [];
+
+  if (avoidPork === true && !preferences.includes("avoid_pork")) {
+    preferences.push("avoid_pork");
+  }
+
+  return [...new Set(preferences)];
+}
+
 exports.updateUser = async (req, res) => {
   try {
     const user_id = req.user.id;
     const userRole = req.user.role;
 
-    let { name, email, phone, password, notification_mode, location, latitude, longitude, preferred_food_types, food_notifications_enabled } = req.body;
+    let { name, email, phone, password, notification_mode, location, latitude, longitude, preferred_food_types, dietary_preferences, food_notifications_enabled, avoid_pork } = req.body;
 
     name = name?.trim() || null;
     email = email?.trim() || null;
@@ -80,9 +93,23 @@ exports.updateUser = async (req, res) => {
       values.push(normalizeFoodTypes(preferred_food_types));
     }
 
+    if (userRole === "recipient" && dietary_preferences !== undefined) {
+      const nextDietaryPreferences = normalizeDietaryPreferences(dietary_preferences, avoid_pork);
+      fields.push(`dietary_preferences = $${index++}`);
+      values.push(nextDietaryPreferences);
+
+      fields.push(`avoid_pork = $${index++}`);
+      values.push(nextDietaryPreferences.includes("avoid_pork"));
+    }
+
     if (userRole === "recipient" && food_notifications_enabled !== undefined) {
       fields.push(`food_notifications_enabled = $${index++}`);
       values.push(food_notifications_enabled !== false);
+    }
+
+    if (userRole === "recipient" && avoid_pork !== undefined && dietary_preferences === undefined) {
+      fields.push(`avoid_pork = $${index++}`);
+      values.push(avoid_pork === true);
     }
 
     if (location && userRole !== 'admin') {
@@ -110,7 +137,7 @@ exports.updateUser = async (req, res) => {
       UPDATE users
       SET ${fields.join(", ")}
       WHERE id = $${index}
-      RETURNING id, name, email, phone, role, notification_mode, preferred_food_types, food_notifications_enabled, location, latitude, longitude
+      RETURNING id, name, email, phone, role, notification_mode, preferred_food_types, dietary_preferences, food_notifications_enabled, avoid_pork, location, latitude, longitude
     `;
 
     const result = await db.query(query, values);
@@ -143,7 +170,9 @@ exports.getCurrentUser = async (req, res) => {
          longitude,
          notification_mode,
          preferred_food_types,
+         dietary_preferences,
          food_notifications_enabled,
+         avoid_pork,
          verification_status,
          verification_approved_at,
          verification_expires_at,

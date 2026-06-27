@@ -4,6 +4,7 @@ import API from "../services/api";
 import { toast } from "react-toastify";
 import SelectMenu from "../components/SelectMenu";
 import { FOOD_CATEGORIES } from "../constants/foodCategories";
+import { RECIPIENT_DIETARY_PREFERENCES } from "../constants/dietaryOptions";
 import "../styles/register.css";
 
 import { FiUserPlus, FiUsers, FiRefreshCw } from "react-icons/fi";
@@ -22,7 +23,9 @@ function Register() {
     latitude: null,
     longitude: null,
     preferred_food_types: [],
-    food_notifications_enabled: true
+    dietary_preferences: [],
+    food_notifications_enabled: true,
+    avoid_pork: false
   });
 
   const [loading, setLoading] = useState(false);
@@ -40,6 +43,35 @@ function Register() {
         preferred_food_types: selected
           ? current.preferred_food_types.filter((item) => item !== foodType)
           : [...current.preferred_food_types, foodType]
+      };
+    });
+  };
+
+  const toggleDietaryPreference = (preference) => {
+    setForm((current) => {
+      const selected = current.dietary_preferences.includes(preference);
+      let nextPreferences = selected
+        ? current.dietary_preferences.filter((item) => item !== preference)
+        : [...current.dietary_preferences, preference];
+
+      if (!selected && preference === "vegan") {
+        nextPreferences = nextPreferences.filter((item) => item !== "vegetarian" && item !== "meat_only");
+      }
+
+      if (!selected && preference === "vegetarian") {
+        nextPreferences = nextPreferences.filter((item) => item !== "vegan" && item !== "meat_only");
+      }
+
+      if (!selected && preference === "meat_only") {
+        nextPreferences = nextPreferences.filter((item) => item !== "vegan" && item !== "vegetarian");
+      }
+
+      nextPreferences = [...new Set(nextPreferences)];
+
+      return {
+        ...current,
+        dietary_preferences: nextPreferences,
+        avoid_pork: nextPreferences.includes("avoid_pork")
       };
     });
   };
@@ -179,6 +211,19 @@ function Register() {
                       type="checkbox"
                       checked={form.preferred_food_types.includes(option.value)}
                       onChange={() => toggleFoodPreference(option.value)}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="form-label">Dietary needs</p>
+              <div className="preference-grid">
+                {RECIPIENT_DIETARY_PREFERENCES.map((option) => (
+                  <label key={option.value} className="preference-check">
+                    <input
+                      type="checkbox"
+                      checked={form.dietary_preferences.includes(option.value)}
+                      onChange={() => toggleDietaryPreference(option.value)}
                     />
                     <span>{option.label}</span>
                   </label>

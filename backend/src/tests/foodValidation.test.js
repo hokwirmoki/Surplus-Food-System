@@ -15,6 +15,9 @@ describe("Food Validation Tests - Surplus Food System", () => {
             .set("Authorization", `Bearer ${token}`)
             .send({
                 food_type: "Rice",
+                food_description: "Fresh cooked rice",
+                dietary_type: "vegetarian",
+                contains_pork: false,
                 quantity: "2 plates",
                 expiry_time: futureExpiry()
             });
@@ -28,6 +31,9 @@ describe("Food Validation Tests - Surplus Food System", () => {
             .post("/api/food/post")
             .set("Authorization", `Bearer ${token}`)
             .send({
+                food_description: "Fresh cooked rice",
+                dietary_type: "vegetarian",
+                contains_pork: false,
                 quantity: "2 plates",
                 location: "Kampala",
                 latitude: 0.3476,
@@ -45,6 +51,9 @@ describe("Food Validation Tests - Surplus Food System", () => {
             .set("Authorization", `Bearer ${token}`)
             .send({
                 food_type: "Beans",
+                food_description: "Fresh cooked beans",
+                dietary_type: "vegetarian",
+                contains_pork: false,
                 quantity: "3 plates",
                 location: "Kampala",
                 latitude: 0.3476,
@@ -64,6 +73,9 @@ describe("Food Validation Tests - Surplus Food System", () => {
             .set("Authorization", `Bearer ${token}`)
             .send({
                 food_type: "Beans",
+                food_description: "Fresh cooked beans",
+                dietary_type: "vegetarian",
+                contains_pork: false,
                 quantity: "3 plates",
                 location: "Kampala",
                 latitude: 0.3476,

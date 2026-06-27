@@ -17,12 +17,12 @@ function isTransientDbError(err) {
 }
 
 class User {
-    static async create({ name, email, password, role, phone, location, latitude, longitude, notification_mode, preferred_food_types, food_notifications_enabled }) {
+    static async create({ name, email, password, role, phone, location, latitude, longitude, notification_mode, preferred_food_types, dietary_preferences, food_notifications_enabled, avoid_pork }) {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const result = await db.query(
-            `INSERT INTO users (name, email, password, role, phone, location, latitude, longitude, notification_mode, preferred_food_types, food_notifications_enabled, verification_status, is_verified)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+            `INSERT INTO users (name, email, password, role, phone, location, latitude, longitude, notification_mode, preferred_food_types, dietary_preferences, food_notifications_enabled, avoid_pork, verification_status, is_verified)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *`,
             [
                 name,
                 email,
@@ -34,7 +34,9 @@ class User {
                 longitude,
                 notification_mode || 'whatsapp',
                 Array.isArray(preferred_food_types) ? preferred_food_types : [],
+                Array.isArray(dietary_preferences) ? dietary_preferences : [],
                 food_notifications_enabled !== false,
+                avoid_pork === true,
                 role === 'admin' ? 'verified' : 'unverified',
                 role === 'admin'
             ]
@@ -62,7 +64,9 @@ class User {
                         longitude,
                         notification_mode,
                         preferred_food_types,
+                        dietary_preferences,
                         food_notifications_enabled,
+                        avoid_pork,
                         verification_status,
                         verification_approved_at,
                         verification_expires_at,
@@ -101,7 +105,9 @@ class User {
                 longitude,
                 notification_mode,
                 preferred_food_types,
+                dietary_preferences,
                 food_notifications_enabled,
+                avoid_pork,
                 verification_status,
                 verification_approved_at,
                 verification_expires_at,

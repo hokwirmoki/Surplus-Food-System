@@ -3,6 +3,7 @@ import API from "../services/api";
 import { toast } from "react-toastify";
 import { formatUGX } from "../utils/formatMoney";
 import SelectMenu from "../components/SelectMenu";
+import { getDietaryLabel } from "../constants/dietaryOptions";
 
 import {
   FaClock,
@@ -227,6 +228,18 @@ function AvailableFood() {
             <p className="meta donor-name">
               <FaUser className="icon small" />
               <strong>Donor:</strong> {f.donor_name || "Unknown donor"}
+            </p>
+
+            <p className="meta food-description">
+              {f.food_description || "No description provided"}
+            </p>
+
+            <p className="meta">
+              <strong>Dietary:</strong> {getDietaryLabel(f.dietary_tags)}
+            </p>
+
+            <p className="meta">
+              <strong>Pork:</strong> {f.contains_pork ? "Contains pork" : "No pork"}
             </p>
 
             <p className="meta">
