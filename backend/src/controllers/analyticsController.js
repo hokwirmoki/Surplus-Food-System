@@ -96,9 +96,28 @@ function buildTimingRecommendation(historyRows) {
   };
 }
 
+function isVerifiedDonor(user) {
+  return (
+    user?.verification_status === "verified" &&
+    user?.verification_expires_at &&
+    new Date(user.verification_expires_at).getTime() > Date.now()
+  );
+}
+
 exports.getDonorAnalytics = async (req, res) => {
   try {
     const donor_id = req.user.id;
+
+    const donorResult = await db.query(
+      `SELECT verification_status, verification_expires_at FROM users WHERE id = $1 AND role = 'donor'`,
+      [donor_id]
+    );
+
+    if (!isVerifiedDonor(donorResult.rows[0])) {
+      return res.status(403).json({
+        message: "Your donor account must be verified before viewing analytics."
+      });
+    }
 
     // ---------------- TOTAL DONATED ----------------
     const totalDonated = await db.query(

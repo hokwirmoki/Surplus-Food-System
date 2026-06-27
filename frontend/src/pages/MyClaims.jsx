@@ -60,7 +60,12 @@ function MyClaims() {
       await API.post("/recipient/confirm-pickup", { food_id });
 
       toast.success("Pickup confirmed!");
-      fetchClaims(); 
+      setClaims((current) =>
+        current.map((claim) =>
+          claim.food_id === food_id ? { ...claim, status: "picked_up" } : claim
+        )
+      );
+      await fetchClaims();
 
     } catch {
       toast.error("Failed to confirm pickup");
@@ -110,7 +115,7 @@ function MyClaims() {
                       <td>{c.donor_name || "Unknown donor"}</td>
                       <td>{c.food_description || "Not specified"}</td>
                       <td>{getDietaryLabel(c.dietary_tags)}</td>
-                      <td>{c.contains_pork ? "Contains pork" : "No pork"}</td>
+                      <td>{c.contains_pork ? "Yes" : "No"}</td>
                       <td>{c.quantity}</td>
                       <td>{c.location}</td>
                       <td>

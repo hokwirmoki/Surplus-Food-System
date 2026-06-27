@@ -62,7 +62,6 @@
 
 .location,
 .donor-name,
-.expiry,
 .time-left {
   display: flex;
   align-items: center;
@@ -231,16 +230,10 @@ select.payment-modal-input {
   background: var(--surface-alt);
 }
 
-.verified-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: white;
+.verified-icon {
+  flex: 0 0 auto;
   color: var(--green);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 14px;
 }
 
 .claim-input-group {

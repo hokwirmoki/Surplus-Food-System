@@ -10,6 +10,42 @@ const {
 
 const NEARBY_RADIUS_KM = Number(process.env.NEARBY_RADIUS_KM || 10);
 
+function matchesRecipientPreferences(food, recipient) {
+  const preferredFoodTypes = recipient?.preferred_food_types || [];
+  const dietaryPreferences = recipient?.dietary_preferences || [];
+  const dietaryTags = food?.dietary_tags || [];
+
+  if (preferredFoodTypes.length > 0 && !preferredFoodTypes.includes(food.food_type)) {
+    return false;
+  }
+
+  if ((recipient?.avoid_pork || dietaryPreferences.includes("avoid_pork")) && food.contains_pork) {
+    return false;
+  }
+
+  if (dietaryPreferences.includes("vegan") && !dietaryTags.includes("vegan")) {
+    return false;
+  }
+
+  if (
+    dietaryPreferences.includes("vegetarian") &&
+    !dietaryTags.includes("vegetarian") &&
+    !dietaryTags.includes("vegan")
+  ) {
+    return false;
+  }
+
+  if (
+    dietaryPreferences.includes("meat_only") &&
+    !dietaryTags.includes("meat") &&
+    !dietaryTags.includes("pork")
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
 exports.getAvailableFood = async (req, res) => {
   try {
     await updateExpiredFood();
@@ -156,6 +192,20 @@ exports.claimFood = async (req, res) => {
 
     const food = foodResult.rows[0];
 
+    const recipientRes = await client.query(
+      `SELECT name, preferred_food_types, dietary_preferences, avoid_pork
+       FROM users
+       WHERE id = $1`,
+      [recipient_id]
+    );
+    const recipient = recipientRes.rows[0];
+
+    if (!matchesRecipientPreferences(food, recipient)) {
+      await client.query("ROLLBACK");
+      transactionStarted = false;
+      return res.status(400).json({ message: "This food does not match your selected food or dietary preferences." });
+    }
+
     if (food.status !== "available") {
       await client.query("ROLLBACK");
       transactionStarted = false;
@@ -225,13 +275,6 @@ exports.claimFood = async (req, res) => {
         [commission, recipient_id, food_id, payment.id, payment.provider, payment.reference]
       );
     }
-
-    const recipientRes = await client.query(
-      `SELECT name FROM users WHERE id = $1`,
-      [recipient_id]
-    );
-
-    const recipient = recipientRes.rows[0];
 
     await client.query("COMMIT");
     transactionStarted = false;

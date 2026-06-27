@@ -55,6 +55,27 @@
   margin-bottom: 20px;
 }
 
+.verification-note {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.verification-note.verified {
+  background: var(--surface-alt);
+  color: var(--green);
+}
+
+.verification-note.locked {
+  background: #fff4e6;
+  color: #8a4b00;
+}
+
 /* DIVIDER */
 hr {
   border: none;
@@ -90,6 +111,17 @@ hr {
   background: var(--green-dark);
 }
 
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.btn-primary:disabled:hover {
+  background: var(--green);
+}
+
 /* SECONDARY BUTTON */
 .btn-secondary {
   padding: 12px;
@@ -110,6 +142,11 @@ hr {
 .btn-secondary:hover {
   background: var(--green);
   color: white;
+}
+
+.btn-secondary:disabled:hover {
+  background: white;
+  color: var(--green);
 }
 
 /* RESPONSIVE */

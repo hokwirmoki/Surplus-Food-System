@@ -28,12 +28,19 @@ function VerifyUsers() {
 
   const handleVerify = async (userId, status) => {
     try {
-      await API.put(
+      const res = await API.put(
         "/admin/verify",
         { userId, status }
       );
+      const updatedUser = res.data;
+
+      setUsers((current) =>
+        current.map((user) =>
+          user.id === userId ? { ...user, ...updatedUser } : user
+        )
+      );
       toast.success(`User ${status}`);
-      fetchUsers(); 
+      await fetchUsers();
     } catch {
       toast.error("Failed to update verification");
     }

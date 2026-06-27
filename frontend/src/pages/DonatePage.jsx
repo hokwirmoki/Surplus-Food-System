@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { toast } from "react-toastify";
 import { formatUGX } from "../utils/formatMoney";
@@ -24,6 +25,14 @@ function hasSafeExpiryTime(value) {
   return !Number.isNaN(expiry.getTime()) && expiry.getTime() > Date.now() + MIN_EXPIRY_BUFFER_MS;
 }
 
+function isVerifiedDonor(user) {
+  return (
+    user?.verification_status === "verified" &&
+    user?.verification_expires_at &&
+    new Date(user.verification_expires_at).getTime() > Date.now()
+  );
+}
+
 async function reverseGeocodeLocation(latitude, longitude) {
   try {
     const res = await fetch(
@@ -44,6 +53,7 @@ async function reverseGeocodeLocation(latitude, longitude) {
 }
 
 function DonatePage() {
+  const navigate = useNavigate();
   const urlParams = new URLSearchParams(window.location.search);
   const isDiscounted = urlParams.get('discounted') === 'true';
   const storedUser = JSON.parse(localStorage.getItem("user")) || {};
@@ -296,6 +306,26 @@ function DonatePage() {
   }, [fetchFoods]);
 
   useEffect(() => {
+    const verifyDonorAccess = async () => {
+      try {
+        const res = await API.get("/user/me");
+        const currentUser = res.data.user;
+        localStorage.setItem("user", JSON.stringify(currentUser));
+
+        if (!isVerifiedDonor(currentUser)) {
+          toast.error("Your donor account must be verified before posting food.");
+          navigate("/donor", { replace: true });
+        }
+      } catch {
+        toast.error("Could not verify donor status.");
+        navigate("/donor", { replace: true });
+      }
+    };
+
+    verifyDonorAccess();
+  }, [navigate]);
+
+  useEffect(() => {
     if (currentLocationRequested.current) return;
 
     currentLocationRequested.current = true;
@@ -346,11 +376,11 @@ function DonatePage() {
             onChange={(contains_pork) => setForm({ ...form, contains_pork })}
             options={form.dietary_type === "meat"
               ? [
-                { value: "false", label: "No pork" },
-                { value: "true", label: "Contains pork" }
+                { value: "false", label: "No" },
+                { value: "true", label: "Yes" }
               ]
-              : [{ value: "false", label: "No pork" }]}
-            placeholder="Pork Content"
+              : [{ value: "false", label: "No" }]}
+            placeholder="Contains Pork?"
             className="donate-select"
           />
 
@@ -434,7 +464,7 @@ function DonatePage() {
                   <td>{food.food_type}</td>
                   <td>{food.food_description || "Not specified"}</td>
                   <td>{getDietaryLabel(food.dietary_tags)}</td>
-                  <td>{food.contains_pork ? "Contains pork" : "No pork"}</td>
+                  <td>{food.contains_pork ? "Yes" : "No"}</td>
                   <td>{food.quantity}</td>
                   <td>{food.discount_price ? formatUGX(food.discount_price) : 'Free'}</td>
                   <td>{formatDate(food.expiry_time)}</td>

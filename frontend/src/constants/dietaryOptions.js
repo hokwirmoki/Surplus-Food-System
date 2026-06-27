@@ -13,7 +13,6 @@ export const RECIPIENT_DIETARY_PREFERENCES = [
 
 export function getDietaryLabel(tags) {
   if (!Array.isArray(tags) || tags.length === 0) return "No dietary label";
-  if (tags.includes("pork")) return "Contains pork";
   if (tags.includes("meat")) return "Contains meat";
   if (tags.includes("vegan")) return "Vegan";
   if (tags.includes("vegetarian")) return "Vegetarian";

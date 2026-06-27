@@ -50,8 +50,10 @@ function AvailableFood() {
 
       previousIds.current = newIds;
       setFoods(validFoods);
+      return validFoods;
     } catch {
       toast.error("Failed to load food");
+      return [];
     }
   };
 
@@ -107,8 +109,12 @@ function AvailableFood() {
         ...prev,
         [food.id]: "",
       }));
+      const availableQuantity = parseInt(String(food.quantity).replace(/[^0-9]/g, ""), 10);
+      if (Number.isFinite(availableQuantity) && requestedQuantity >= availableQuantity) {
+        setFoods((current) => current.filter((item) => item.id !== food.id));
+      }
       closePaymentModal();
-      fetchFood();
+      await fetchFood();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to claim food");
     }
@@ -219,15 +225,12 @@ function AvailableFood() {
               <h3>{f.food_type}</h3>
             </div>
 
-            {f.donor_verified && (
-              <span className="verified-badge">
-                <FaCheckCircle /> Verified donor
-              </span>
-            )}
-
             <p className="meta donor-name">
               <FaUser className="icon small" />
               <strong>Donor:</strong> {f.donor_name || "Unknown donor"}
+              {f.donor_verified && (
+                <FaCheckCircle className="verified-icon" title="Verified donor" />
+              )}
             </p>
 
             <p className="meta food-description">
@@ -239,7 +242,7 @@ function AvailableFood() {
             </p>
 
             <p className="meta">
-              <strong>Pork:</strong> {f.contains_pork ? "Contains pork" : "No pork"}
+              <strong>Pork:</strong> {f.contains_pork ? "Yes" : "No"}
             </p>
 
             <p className="meta">
@@ -249,13 +252,6 @@ function AvailableFood() {
             <p className="meta location">
               <FaMapMarkerAlt className="icon small" />
               {f.location}
-            </p>
-
-            <p className="meta expiry">
-              <strong>Expiry:</strong>{" "}
-              {f.expiry_time
-                ? new Date(f.expiry_time).toLocaleString()
-                : "Not specified"}
             </p>
 
             <p className="time-left">

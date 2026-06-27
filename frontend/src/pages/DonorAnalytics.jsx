@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 import {
   FaCheckCircle,
@@ -8,7 +9,16 @@ import {
 
 import "../styles/donorAnalytics.css";
 
+function isVerifiedDonor(user) {
+  return (
+    user?.verification_status === "verified" &&
+    user?.verification_expires_at &&
+    new Date(user.verification_expires_at).getTime() > Date.now()
+  );
+}
+
 function DonorAnalytics() {
+  const navigate = useNavigate();
   const [data, setData] = useState({
     totalDonated: 0,
     totalClaimed: 0,
@@ -42,9 +52,24 @@ function DonorAnalytics() {
   };
 
   useEffect(() => {
+    const verifyDonorAccess = async () => {
+      try {
+        const res = await API.get("/user/me");
+        const currentUser = res.data.user;
+        localStorage.setItem("user", JSON.stringify(currentUser));
+
+        if (!isVerifiedDonor(currentUser)) {
+          navigate("/donor", { replace: true });
+        }
+      } catch {
+        navigate("/donor", { replace: true });
+      }
+    };
+
+    verifyDonorAccess();
     const timer = window.setTimeout(fetchAnalytics, 0);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [navigate]);
 
   const formatDate = (date) => {
     if (!date) return "Not available";

@@ -6,6 +6,14 @@ const logActivity = require("../../utils/activityLogger");
 const NEARBY_RADIUS_KM = Number(process.env.NEARBY_RADIUS_KM || 10);
 const MIN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 
+function isVerifiedDonor(user) {
+  return (
+    user?.verification_status === "verified" &&
+    user?.verification_expires_at &&
+    new Date(user.verification_expires_at).getTime() > Date.now()
+  );
+}
+
 function getFoodDietaryTags(dietaryType, containsPork) {
   if (containsPork) return ["meat", "pork"];
   if (dietaryType === "vegan") return ["vegan", "vegetarian"];
@@ -17,7 +25,6 @@ function getFoodDietaryTags(dietaryType, containsPork) {
 function formatDietaryTags(tags) {
   if (!Array.isArray(tags) || tags.length === 0) return "No dietary label";
 
-  if (tags.includes("pork")) return "Contains pork";
   if (tags.includes("meat")) return "Contains meat";
   if (tags.includes("vegan")) return "Vegan";
   if (tags.includes("vegetarian")) return "Vegetarian";
@@ -29,6 +36,17 @@ exports.postFood = async (req, res) => {
     const donor_id = req.user.id;
     const { food_type, food_description, dietary_type, quantity, expiry_time, is_discounted, price, contains_pork } = req.body;
     const { location, latitude, longitude } = req.body;
+
+    const donorResult = await db.query(
+      `SELECT verification_status, verification_expires_at FROM users WHERE id = $1 AND role = 'donor'`,
+      [donor_id]
+    );
+
+    if (!isVerifiedDonor(donorResult.rows[0])) {
+      return res.status(403).json({
+        message: "Your donor account must be verified before posting food."
+      });
+    }
 
     if (!location || location.trim() === "") {
       return res.status(400).json({
@@ -209,7 +227,7 @@ exports.postFood = async (req, res) => {
           `Donor: ${donorName}`,
           `Description: ${savedFood.food_description}`,
           `Dietary: ${formatDietaryTags(savedFood.dietary_tags)}`,
-          `Pork: ${savedFood.contains_pork ? "Contains pork" : "No pork"}`,
+          `Pork: ${savedFood.contains_pork ? "Yes" : "No"}`,
           `Quantity: ${savedFood.quantity}`,
           `Location: ${savedFood.location || "GPS Location"}`,
           "",
