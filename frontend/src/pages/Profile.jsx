@@ -35,6 +35,21 @@ function Profile() {
     return new Date(date).toLocaleDateString();
   };
 
+  const notificationOptions = user?.role === "donor"
+    ? [
+      { value: "whatsapp", label: "WhatsApp" },
+      { value: "none", label: "Off" }
+    ]
+    : [
+      { value: "whatsapp", label: "WhatsApp" },
+      { value: "sms", label: "SMS" }
+    ];
+
+  const formatNotificationMode = (mode) => {
+    if (mode === "none") return "Off";
+    return mode || "whatsapp";
+  };
+
   useEffect(() => {
     const fetchUser = async () => {
       if (!token) return;
@@ -256,7 +271,7 @@ function Profile() {
             <p><span>Location:</span> {user?.location || "Not set"}</p>
           )}
           {user?.role !== "admin" && (
-            <p><span>Notifications:</span> {user?.notification_mode || "whatsapp"}</p>
+            <p><span>Notifications:</span> {formatNotificationMode(user?.notification_mode)}</p>
           )}
           {user?.role === "recipient" && (
             <p><span>Food alerts:</span> {user?.food_notifications_enabled === false ? "Off" : "On"}</p>
@@ -326,10 +341,7 @@ function Profile() {
             <SelectMenu
               value={form.notification_mode}
               onChange={(notification_mode) => setForm({ ...form, notification_mode })}
-              options={[
-                { value: "whatsapp", label: "WhatsApp" },
-                { value: "sms", label: "SMS" }
-              ]}
+              options={notificationOptions}
             />
           )}
 

@@ -27,6 +27,17 @@ function normalizeDietaryPreferences(value, avoidPork) {
   return [...new Set(preferences)];
 }
 
+function isPdfDocument(document) {
+  const name = String(document?.name || "").toLowerCase();
+  const type = String(document?.type || "").toLowerCase();
+  const content = String(document?.content || "").toLowerCase();
+
+  return (
+    name.endsWith(".pdf") &&
+    (type === "application/pdf" || content.startsWith("data:application/pdf"))
+  );
+}
+
 exports.updateUser = async (req, res) => {
   try {
     const user_id = req.user.id;
@@ -204,6 +215,13 @@ exports.applyForVerification = async (req, res) => {
     const user_id = req.user.id;
 
     const { vendorType, document, paymentProvider, paymentContact, paid, paymentReference } = req.body;
+
+    if (!isPdfDocument(document)) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({
+        message: "Only PDF documents are accepted for donor verification."
+      });
+    }
 
     const currentUser = await client.query(
       `SELECT verification_status, verification_expires_at FROM users WHERE id = $1`,

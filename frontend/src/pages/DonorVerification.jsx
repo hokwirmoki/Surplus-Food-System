@@ -26,8 +26,18 @@ function DonorVerification() {
   const handleFile = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+
+    if (!isPdf) {
+      e.target.value = "";
+      setFileData(null);
+      toast.error("Only PDF documents are accepted for verification.");
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = () => setFileData({ name: file.name, content: reader.result });
+    reader.onload = () => setFileData({ name: file.name, type: file.type, content: reader.result });
     reader.readAsDataURL(file);
   };
 
@@ -67,7 +77,7 @@ function DonorVerification() {
   };
 
   const submitApplication = async () => {
-    if (!fileData) return toast.error("Please upload a verification document");
+    if (!fileData) return toast.error("Please upload a PDF verification document");
     if (!paid) return toast.error(`Please pay ${formatUGX(50000)} before submitting your application`);
 
     const token = localStorage.getItem("token");
@@ -192,7 +202,7 @@ function DonorVerification() {
           <label className="form-label">Upload Document</label>
           <label className="file-upload-control">
             <span>{fileData?.name || "Choose file"}</span>
-            <input type="file" onChange={handleFile} />
+            <input type="file" accept="application/pdf,.pdf" onChange={handleFile} />
           </label>
 
           <div className="verification-actions">
