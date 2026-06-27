@@ -4,6 +4,7 @@ const { sendWhatsApp } = require("../../utils/notificationService");
 const logActivity = require("../../utils/activityLogger");
 
 const NEARBY_RADIUS_KM = Number(process.env.NEARBY_RADIUS_KM || 10);
+const MIN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 
 exports.postFood = async (req, res) => {
   try {
@@ -25,6 +26,14 @@ exports.postFood = async (req, res) => {
 
     if (!Number.isFinite(numericQuantity) || numericQuantity <= 0) {
       return res.status(400).json({ message: "Quantity must be a positive number." });
+    }
+
+    const expiryDate = new Date(expiry_time);
+
+    if (!expiry_time || Number.isNaN(expiryDate.getTime()) || expiryDate.getTime() <= Date.now() + MIN_EXPIRY_BUFFER_MS) {
+      return res.status(400).json({
+        message: "Expiry time must be more than 5 minutes from now."
+      });
     }
 
     if (is_discounted && !price) {

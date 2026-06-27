@@ -8,6 +8,17 @@ function toInputValue(date, hour, minute) {
   return `${date}T${pad(hour)}:${pad(minute)}`;
 }
 
+function toDateInputValue(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function getDefaultPickerDate() {
+  const date = new Date(Date.now() + 20 * 60 * 1000);
+  date.setSeconds(0, 0);
+  date.setMinutes(Math.floor(date.getMinutes() / 15) * 15);
+  return date;
+}
+
 function formatDisplay(value) {
   if (!value) return "Select expiry date and time";
 
@@ -27,9 +38,11 @@ function DateTimePicker({ value, onChange }) {
   const pickerRef = useRef(null);
   const [open, setOpen] = useState(false);
   const now = new Date();
-  const initialDate = value ? value.slice(0, 10) : now.toISOString().slice(0, 10);
-  const initialHour = value ? Number(value.slice(11, 13)) : now.getHours();
-  const initialMinute = value ? Number(value.slice(14, 16)) : 0;
+  const defaultDate = getDefaultPickerDate();
+  const today = toDateInputValue(now);
+  const initialDate = value ? value.slice(0, 10) : toDateInputValue(defaultDate);
+  const initialHour = value ? Number(value.slice(11, 13)) : defaultDate.getHours();
+  const initialMinute = value ? Number(value.slice(14, 16)) : defaultDate.getMinutes();
 
   const [date, setDate] = useState(initialDate);
   const [hour, setHour] = useState(initialHour);
@@ -71,6 +84,7 @@ function DateTimePicker({ value, onChange }) {
             Date
             <input
               type="date"
+              min={today}
               value={date}
               onChange={(event) => setDate(event.target.value)}
             />

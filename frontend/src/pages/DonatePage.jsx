@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import API from "../services/api";
 import { toast } from "react-toastify";
 import { formatUGX } from "../utils/formatMoney";
@@ -12,23 +12,56 @@ import "../styles/donatePage.css";
 import LeafletLocationPicker from "../components/LeafletMapPicker";
 import DateTimePicker from "../components/DateTimePicker";
 
+const MIN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
+const EXPIRY_ERROR_MESSAGE = "Expiry time must be more than 5 minutes from now.";
+
+function hasSafeExpiryTime(value) {
+  const expiry = new Date(value);
+
+  return !Number.isNaN(expiry.getTime()) && expiry.getTime() > Date.now() + MIN_EXPIRY_BUFFER_MS;
+}
+
+async function reverseGeocodeLocation(latitude, longitude) {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+    );
+
+    if (!res.ok) throw new Error("Reverse geocoding failed");
+
+    const data = await res.json();
+
+    return (
+      data.display_name?.split(",").slice(0, 3).join(" - ") ||
+      `${latitude}, ${longitude}`
+    );
+  } catch {
+    return `${latitude}, ${longitude}`;
+  }
+}
+
 function DonatePage() {
   const urlParams = new URLSearchParams(window.location.search);
   const isDiscounted = urlParams.get('discounted') === 'true';
   const storedUser = JSON.parse(localStorage.getItem("user")) || {};
+  const savedLocation = storedUser.location || "";
+  const savedLatitude = storedUser.latitude || "";
+  const savedLongitude = storedUser.longitude || "";
+  const currentLocationRequested = useRef(false);
 
   const [form, setForm] = useState({
     food_type: "",
     quantity: "",
     expiry_time: "",
     price: "",
-    location: storedUser.location || "",
-    lat: storedUser.latitude || "",
-    lng: storedUser.longitude || ""
+    location: savedLocation,
+    lat: savedLatitude,
+    lng: savedLongitude
   });
 
   const [foods, setFoods] = useState([]);
   const [showMap, setShowMap] = useState(false);
+  const [locationSource, setLocationSource] = useState(savedLocation ? "saved" : "");
 
   // PAGINATION
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,6 +75,7 @@ function DonatePage() {
         lat: "",
         lng: ""
       });
+      setLocationSource("manual");
       return;
     }
 
@@ -75,6 +109,11 @@ function DonatePage() {
       return false;
     }
 
+    if (!hasSafeExpiryTime(form.expiry_time)) {
+      toast.error(EXPIRY_ERROR_MESSAGE);
+      return false;
+    }
+
     if (!form.location.trim()) {
       toast.error("Please provide the food location.");
       return false;
@@ -88,14 +127,79 @@ function DonatePage() {
     return true;
   };
 
+  const useCurrentLocation = useCallback(({ silent = false } = {}) => {
+    if (!navigator.geolocation) {
+      if (!silent) {
+        toast.error("Current location is not available in this browser.");
+      }
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+        const location = await reverseGeocodeLocation(latitude, longitude);
+
+        setForm((prev) => ({
+          ...prev,
+          location,
+          lat: latitude,
+          lng: longitude
+        }));
+        setLocationSource("current");
+        toast.success("Current location has been recorded and will be used for this food.");
+      },
+      () => {
+        if (!silent) {
+          toast.error("Could not get current location. Use your saved location or pick one on the map.");
+        }
+      },
+      { enableHighAccuracy: false, timeout: 7000, maximumAge: 5 * 60 * 1000 }
+    );
+  }, []);
+
+  const useSavedLocation = useCallback(() => {
+    if (!savedLocation.trim()) {
+      toast.error("No saved registration location was found.");
+      return;
+    }
+
+    setForm((prev) => ({
+      ...prev,
+      location: savedLocation,
+      lat: savedLatitude,
+      lng: savedLongitude
+    }));
+    setLocationSource("saved");
+    toast.success("Saved registration location will be used for this food.");
+  }, [savedLatitude, savedLocation, savedLongitude]);
+
   const handleMapSelect = useCallback((data) => {
+    if (!data.location) return;
+
     setForm((prev) => ({
       ...prev,
       lat: data.lat,
       lng: data.lng,
       location: data.location
     }));
+    setLocationSource("map");
   }, []);
+
+  const handleExpiryChange = (expiry_time) => {
+    if (!expiry_time) {
+      setForm({ ...form, expiry_time });
+      return;
+    }
+
+    if (!hasSafeExpiryTime(expiry_time)) {
+      toast.error(EXPIRY_ERROR_MESSAGE);
+      return;
+    }
+
+    setForm({ ...form, expiry_time });
+  };
 
   const formatDate = (date) => {
     if (!date) return "No expiry";
@@ -135,9 +239,9 @@ function DonatePage() {
         quantity: "",
         expiry_time: "",
         price: "",
-        location: storedUser.location || "",
-        lat: storedUser.latitude || "",
-        lng: storedUser.longitude || ""
+        location: form.location,
+        lat: form.lat,
+        lng: form.lng
       });
 
       fetchFoods();
@@ -165,6 +269,13 @@ function DonatePage() {
     const timer = window.setTimeout(fetchFoods, 0);
     return () => window.clearTimeout(timer);
   }, [fetchFoods]);
+
+  useEffect(() => {
+    if (currentLocationRequested.current) return;
+
+    currentLocationRequested.current = true;
+    useCurrentLocation({ silent: true });
+  }, [useCurrentLocation]);
 
   /* PAGINATION LOGIC */
   const indexOfLast = currentPage * itemsPerPage;
@@ -207,7 +318,7 @@ function DonatePage() {
 
           <DateTimePicker
             value={form.expiry_time}
-            onChange={(expiry_time) => setForm({ ...form, expiry_time })}
+            onChange={handleExpiryChange}
           />
 
           <input
@@ -217,10 +328,28 @@ function DonatePage() {
             onChange={handleChange}
           />
 
-          <div className="btn-group">
-            <button className="secondary-btn" onClick={() => setShowMap(true)}>
+          <div className="location-actions">
+            <button
+              className={`secondary-btn ${locationSource === "current" ? "active" : ""}`}
+              onClick={() => useCurrentLocation()}
+            >
+              Use Current Location
+            </button>
+            <button
+              className={`secondary-btn ${locationSource === "saved" ? "active" : ""}`}
+              onClick={useSavedLocation}
+            >
+              Use Saved Location
+            </button>
+            <button
+              className={`secondary-btn ${locationSource === "map" ? "active" : ""}`}
+              onClick={() => setShowMap(true)}
+            >
               Pick Location on Map
             </button>
+          </div>
+
+          <div className="btn-group">
             <button className="post-btn" onClick={postFood}>
               Post Food
             </button>
