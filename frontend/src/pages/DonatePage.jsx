@@ -11,6 +11,8 @@ import {
 import "../styles/donatePage.css";
 import LeafletLocationPicker from "../components/LeafletMapPicker";
 import DateTimePicker from "../components/DateTimePicker";
+import SelectMenu from "../components/SelectMenu";
+import { FOOD_CATEGORIES } from "../constants/foodCategories";
 
 const MIN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 const EXPIRY_ERROR_MESSAGE = "Expiry time must be more than 5 minutes from now.";
@@ -293,11 +295,12 @@ function DonatePage() {
         <div className="donate-card">
           <h2>{isDiscounted ? "Post Discounted Food" : "Donate Food"}</h2>
 
-          <input
-            name="food_type"
+          <SelectMenu
             value={form.food_type}
-            placeholder="Food Type"
-            onChange={handleChange}
+            onChange={(food_type) => setForm({ ...form, food_type })}
+            options={FOOD_CATEGORIES}
+            placeholder="Food Category"
+            className="donate-select"
           />
 
           <input

@@ -6,12 +6,20 @@ const {
   consumeSuccessfulPayment,
 } = require("../../utils/paymentService");
 
+function normalizeFoodTypes(value) {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+}
+
 exports.updateUser = async (req, res) => {
   try {
     const user_id = req.user.id;
     const userRole = req.user.role;
 
-    let { name, email, phone, password, notification_mode, location, latitude, longitude } = req.body;
+    let { name, email, phone, password, notification_mode, location, latitude, longitude, preferred_food_types, food_notifications_enabled } = req.body;
 
     name = name?.trim() || null;
     email = email?.trim() || null;
@@ -67,6 +75,16 @@ exports.updateUser = async (req, res) => {
       values.push(notification_mode);
     }
 
+    if (userRole === "recipient" && preferred_food_types !== undefined) {
+      fields.push(`preferred_food_types = $${index++}`);
+      values.push(normalizeFoodTypes(preferred_food_types));
+    }
+
+    if (userRole === "recipient" && food_notifications_enabled !== undefined) {
+      fields.push(`food_notifications_enabled = $${index++}`);
+      values.push(food_notifications_enabled !== false);
+    }
+
     if (location && userRole !== 'admin') {
       fields.push(`location = $${index++}`);
       values.push(location);
@@ -92,7 +110,7 @@ exports.updateUser = async (req, res) => {
       UPDATE users
       SET ${fields.join(", ")}
       WHERE id = $${index}
-      RETURNING id, name, email, phone, role, notification_mode, location, latitude, longitude
+      RETURNING id, name, email, phone, role, notification_mode, preferred_food_types, food_notifications_enabled, location, latitude, longitude
     `;
 
     const result = await db.query(query, values);
@@ -124,6 +142,8 @@ exports.getCurrentUser = async (req, res) => {
          latitude,
          longitude,
          notification_mode,
+         preferred_food_types,
+         food_notifications_enabled,
          verification_status,
          verification_approved_at,
          verification_expires_at,

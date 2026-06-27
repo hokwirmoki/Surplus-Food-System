@@ -17,12 +17,12 @@ function isTransientDbError(err) {
 }
 
 class User {
-    static async create({ name, email, password, role, phone, location, latitude, longitude, notification_mode }) {
+    static async create({ name, email, password, role, phone, location, latitude, longitude, notification_mode, preferred_food_types, food_notifications_enabled }) {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const result = await db.query(
-            `INSERT INTO users (name, email, password, role, phone, location, latitude, longitude, notification_mode, verification_status, is_verified)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+            `INSERT INTO users (name, email, password, role, phone, location, latitude, longitude, notification_mode, preferred_food_types, food_notifications_enabled, verification_status, is_verified)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
             [
                 name,
                 email,
@@ -33,6 +33,8 @@ class User {
                 latitude,
                 longitude,
                 notification_mode || 'whatsapp',
+                Array.isArray(preferred_food_types) ? preferred_food_types : [],
+                food_notifications_enabled !== false,
                 role === 'admin' ? 'verified' : 'unverified',
                 role === 'admin'
             ]
@@ -59,6 +61,8 @@ class User {
                         latitude,
                         longitude,
                         notification_mode,
+                        preferred_food_types,
+                        food_notifications_enabled,
                         verification_status,
                         verification_approved_at,
                         verification_expires_at,
@@ -96,6 +100,8 @@ class User {
                 latitude,
                 longitude,
                 notification_mode,
+                preferred_food_types,
+                food_notifications_enabled,
                 verification_status,
                 verification_approved_at,
                 verification_expires_at,

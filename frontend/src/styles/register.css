@@ -435,6 +435,37 @@
   margin-top: 8px;
 }
 
+.preference-panel {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0 14px;
+  text-align: left;
+}
+
+.preference-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.preference-check,
+.preference-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--green-dark);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.register-card .preference-check input,
+.register-card .preference-toggle input {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  margin: 0;
+}
+
 @media (max-width: 700px) {
   .verification-content {
     gap: 16px;
@@ -454,6 +485,10 @@
 
   .verification-actions,
   .payment-modal-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .preference-grid {
     grid-template-columns: 1fr;
   }
 

@@ -10,6 +10,14 @@ const { sendWhatsApp, normalizeWhatsAppPhone } = require("../../utils/notificati
 const JWT_SECRET = process.env.JWT_SECRET || "secret123";
 const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 2);
 
+function normalizeFoodTypes(value) {
+    if (!Array.isArray(value)) return [];
+
+    return value
+        .map((item) => String(item || "").trim())
+        .filter(Boolean);
+}
+
 function hasOtpExpired(user) {
     if (!user?.otp_expires_at) {
         return false;
@@ -128,9 +136,12 @@ async function issueOtp(userId, phone) {
 // REGISTER (WITH DB OTP)
 exports.register = async (req, res) => {
     try {
-        const { name, password, role, phone, location, latitude, longitude } = req.body;
+        const { name, password, role, phone, location, latitude, longitude, food_notifications_enabled } = req.body;
         const email = req.body.email?.trim().toLowerCase();
         const normalizedPhone = normalizeWhatsAppPhone(phone);
+        const preferredFoodTypes = role === "recipient"
+            ? normalizeFoodTypes(req.body.preferred_food_types)
+            : [];
 
         if (!normalizedPhone) {
             return res.status(400).json({
@@ -159,7 +170,9 @@ exports.register = async (req, res) => {
             location,
             latitude,
             longitude,
-            notification_mode: 'whatsapp'
+            notification_mode: 'whatsapp',
+            preferred_food_types: preferredFoodTypes,
+            food_notifications_enabled: role === "recipient" ? food_notifications_enabled !== false : true
         });
 
         const otpResult = await issueOtp(user.id, normalizedPhone);
@@ -330,6 +343,8 @@ exports.login = async (req, res) => {
                 latitude: user.latitude,
                 longitude: user.longitude,
                 notification_mode: user.notification_mode || "whatsapp",
+                preferred_food_types: user.preferred_food_types || [],
+                food_notifications_enabled: user.food_notifications_enabled !== false,
                 verification_status: user.verification_status,
                 verification_approved_at: user.verification_approved_at,
                 verification_expires_at: user.verification_expires_at
@@ -356,7 +371,13 @@ exports.updateProfile = async (req, res) => {
     const userId = req.user.id;
     const db = require("../config/db");
 
-    const { name, email, phone, password, notification_mode } = req.body;
+    const { name, email, phone, password, notification_mode, preferred_food_types, food_notifications_enabled } = req.body;
+    const nextPreferredFoodTypes = preferred_food_types === undefined
+      ? null
+      : normalizeFoodTypes(preferred_food_types);
+    const nextFoodNotificationsEnabled = food_notifications_enabled === undefined
+      ? null
+      : food_notifications_enabled !== false;
 
     let hashedPassword = null;
 
@@ -372,9 +393,11 @@ exports.updateProfile = async (req, res) => {
         email = COALESCE(NULLIF($2, ''), email),
         phone = COALESCE(NULLIF($3, ''), phone),
         password = COALESCE($4, password),
-        notification_mode = COALESCE($5, notification_mode)
-      WHERE id = $6
-      RETURNING id, name, email, phone, role, notification_mode
+        notification_mode = COALESCE($5, notification_mode),
+        preferred_food_types = COALESCE($6, preferred_food_types),
+        food_notifications_enabled = COALESCE($7, food_notifications_enabled)
+      WHERE id = $8
+      RETURNING id, name, email, phone, role, notification_mode, preferred_food_types, food_notifications_enabled
       `,
       [
         name || "",
@@ -382,6 +405,8 @@ exports.updateProfile = async (req, res) => {
         phone || "",
         hashedPassword,
         notification_mode || null,
+        nextPreferredFoodTypes,
+        nextFoodNotificationsEnabled,
         userId
       ]
     );

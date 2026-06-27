@@ -66,6 +66,11 @@ exports.postFood = async (req, res) => {
     setImmediate(async () => {
       try {
         const hasFoodCoordinates = savedFood.latitude !== null && savedFood.longitude !== null;
+        const donorResult = await db.query(
+          `SELECT name FROM users WHERE id = $1`,
+          [savedFood.donor_id]
+        );
+        const donorName = donorResult.rows[0]?.name || "A donor";
         const recipients = hasFoodCoordinates
           ? await db.query(
             `WITH recipients AS (
@@ -89,8 +94,13 @@ exports.postFood = async (req, res) => {
                  END AS distance_km
                FROM users
                WHERE role = 'recipient'
+                 AND food_notifications_enabled = true
                  AND notification_mode = 'whatsapp'
                  AND phone IS NOT NULL
+                 AND (
+                   COALESCE(array_length(preferred_food_types, 1), 0) = 0
+                   OR $4 = ANY(preferred_food_types)
+                 )
                  AND (
                    regexp_replace(phone, '[[:space:]]+', '', 'g') ~ '^[+][1-9][0-9]{7,14}$'
                    OR regexp_replace(phone, '[[:space:]]+', '', 'g') ~ '^0[0-9]{8,9}$'
@@ -106,18 +116,24 @@ exports.postFood = async (req, res) => {
              FROM recipients
              WHERE NOT EXISTS (SELECT 1 FROM nearby)
              ORDER BY distance_km ASC NULLS LAST`,
-            [savedFood.latitude, savedFood.longitude, NEARBY_RADIUS_KM]
+            [savedFood.latitude, savedFood.longitude, NEARBY_RADIUS_KM, savedFood.food_type]
           )
           : await db.query(
             `SELECT phone, notification_mode, NULL AS distance_km
              FROM users
              WHERE role = 'recipient'
+               AND food_notifications_enabled = true
                AND notification_mode = 'whatsapp'
                AND phone IS NOT NULL
                AND (
+                 COALESCE(array_length(preferred_food_types, 1), 0) = 0
+                 OR $1 = ANY(preferred_food_types)
+               )
+               AND (
                  regexp_replace(phone, '[[:space:]]+', '', 'g') ~ '^[+][1-9][0-9]{7,14}$'
                  OR regexp_replace(phone, '[[:space:]]+', '', 'g') ~ '^0[0-9]{8,9}$'
-               )`
+               )`,
+            [savedFood.food_type]
           );
 
         const mapLink = savedFood.latitude && savedFood.longitude
@@ -127,6 +143,7 @@ exports.postFood = async (req, res) => {
         const message = [
           "New Food Available!",
           `Food: ${savedFood.food_type}`,
+          `Donor: ${donorName}`,
           `Quantity: ${savedFood.quantity}`,
           `Location: ${savedFood.location || "GPS Location"}`,
           "",

@@ -30,7 +30,7 @@ exports.getAvailableFood = async (req, res) => {
 
     const result = await db.query(
       `WITH current_recipient AS (
-         SELECT latitude, longitude
+         SELECT latitude, longitude, preferred_food_types
          FROM users
          WHERE id = $1
        ),
@@ -63,6 +63,10 @@ exports.getAvailableFood = async (req, res) => {
          JOIN users u ON f.donor_id = u.id
          CROSS JOIN current_recipient cr
          WHERE f.status = 'available'
+           AND (
+             COALESCE(array_length(cr.preferred_food_types, 1), 0) = 0
+             OR f.food_type = ANY(cr.preferred_food_types)
+           )
        ),
        ranked_food AS (
          SELECT
@@ -311,11 +315,13 @@ exports.getMyClaims = async (req, res) => {
           f.food_type,
           c.quantity,
           f.location,
+          u.name as donor_name,
           c.status,
           c.created_at as claimed_at,
           f.id as food_id
        FROM claims c
        JOIN food_items f ON f.id = c.food_id
+       JOIN users u ON u.id = f.donor_id
        WHERE c.recipient_id = $1
        ORDER BY c.created_at DESC`,
       [recipient_id]

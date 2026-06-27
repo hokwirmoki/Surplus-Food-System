@@ -57,6 +57,7 @@
 }
 
 .location,
+.donor-name,
 .expiry,
 .time-left {
   display: flex;

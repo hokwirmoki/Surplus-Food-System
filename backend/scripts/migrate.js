@@ -14,6 +14,8 @@ async function migrate() {
                 latitude DOUBLE PRECISION,
                 longitude DOUBLE PRECISION,
                 notification_mode TEXT DEFAULT 'whatsapp',
+                preferred_food_types TEXT[] DEFAULT '{}',
+                food_notifications_enabled BOOLEAN DEFAULT TRUE,
                 verification_status TEXT DEFAULT 'unverified',
                 documents JSONB,
                 verification_approved_at TIMESTAMP,
@@ -50,6 +52,8 @@ async function migrate() {
             ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
             ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION,
             ADD COLUMN IF NOT EXISTS notification_mode TEXT DEFAULT 'whatsapp',
+            ADD COLUMN IF NOT EXISTS preferred_food_types TEXT[] DEFAULT '{}',
+            ADD COLUMN IF NOT EXISTS food_notifications_enabled BOOLEAN DEFAULT TRUE,
             ADD COLUMN IF NOT EXISTS verification_status TEXT DEFAULT 'unverified',
             ADD COLUMN IF NOT EXISTS documents JSONB,
             ADD COLUMN IF NOT EXISTS verification_approved_at TIMESTAMP,
@@ -211,6 +215,11 @@ async function migrate() {
         await db.query(`
             CREATE INDEX IF NOT EXISTS idx_users_role_notification_coords
             ON users (role, notification_mode, latitude, longitude)
+        `);
+
+        await db.query(`
+            CREATE INDEX IF NOT EXISTS idx_users_preferred_food_types
+            ON users USING GIN (preferred_food_types)
         `);
 
         await db.query(`

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import API from "../services/api";
 import { toast } from "react-toastify";
 import SelectMenu from "../components/SelectMenu";
+import { FOOD_CATEGORIES } from "../constants/foodCategories";
 import "../styles/register.css";
 
 import { FiUserPlus, FiUsers, FiRefreshCw } from "react-icons/fi";
@@ -19,13 +20,28 @@ function Register() {
     role: "donor",
     location: "",
     latitude: null,
-    longitude: null
+    longitude: null,
+    preferred_food_types: [],
+    food_notifications_enabled: true
   });
 
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const toggleFoodPreference = (foodType) => {
+    setForm((current) => {
+      const selected = current.preferred_food_types.includes(foodType);
+
+      return {
+        ...current,
+        preferred_food_types: selected
+          ? current.preferred_food_types.filter((item) => item !== foodType)
+          : [...current.preferred_food_types, foodType]
+      };
+    });
   };
 
   useEffect(() => {
@@ -152,6 +168,32 @@ function Register() {
               { value: "recipient", label: "Recipient" }
             ]}
           />
+
+          {form.role === "recipient" && (
+            <div className="preference-panel">
+              <p className="form-label">Food preferences</p>
+              <div className="preference-grid">
+                {FOOD_CATEGORIES.map((option) => (
+                  <label key={option.value} className="preference-check">
+                    <input
+                      type="checkbox"
+                      checked={form.preferred_food_types.includes(option.value)}
+                      onChange={() => toggleFoodPreference(option.value)}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+              <label className="preference-toggle">
+                <input
+                  type="checkbox"
+                  checked={form.food_notifications_enabled}
+                  onChange={(event) => setForm({ ...form, food_notifications_enabled: event.target.checked })}
+                />
+                <span>Receive notifications when matching food is posted</span>
+              </label>
+            </div>
+          )}
 
           <button onClick={register} disabled={loading}>
             {loading ? "Registering..." : "Register"}

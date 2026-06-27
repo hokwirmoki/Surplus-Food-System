@@ -91,6 +91,7 @@ function MyClaims() {
                 <thead>
                   <tr>
                     <th>Food</th>
+                    <th>Donor</th>
                     <th>Quantity</th>
                     <th>Location</th>
                     <th>Claimed At</th>
@@ -102,6 +103,7 @@ function MyClaims() {
                   {displayedClaims.map((c, i) => (
                     <tr key={`${c.food_id}-${c.claimed_at || i}`}>
                       <td>{c.food_type}</td>
+                      <td>{c.donor_name || "Unknown donor"}</td>
                       <td>{c.quantity}</td>
                       <td>{c.location}</td>
                       <td>

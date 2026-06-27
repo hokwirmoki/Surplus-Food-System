@@ -3,6 +3,7 @@ import API from "../services/api";
 import { toast } from "react-toastify";
 import { FaCheckCircle } from "react-icons/fa";
 import SelectMenu from "../components/SelectMenu";
+import { FOOD_CATEGORIES } from "../constants/foodCategories";
 import "../styles/profile.css";
 
 import profileImg from "../assets/profile.jpg";
@@ -20,7 +21,9 @@ function Profile() {
     location: storedUser.location || "",
     latitude: storedUser.latitude || null,
     longitude: storedUser.longitude || null,
-    notification_mode: storedUser.notification_mode || "whatsapp"
+    notification_mode: storedUser.notification_mode || "whatsapp",
+    preferred_food_types: storedUser.preferred_food_types || [],
+    food_notifications_enabled: storedUser.food_notifications_enabled !== false
   });
   const [loading, setLoading] = useState(false);
 
@@ -47,6 +50,8 @@ function Profile() {
           latitude: currentUser.latitude || null,
           longitude: currentUser.longitude || null,
           notification_mode: currentUser.notification_mode || "whatsapp",
+          preferred_food_types: currentUser.preferred_food_types || [],
+          food_notifications_enabled: currentUser.food_notifications_enabled !== false
         });
         localStorage.setItem("user", JSON.stringify(currentUser));
       } catch (err) {
@@ -69,6 +74,19 @@ function Profile() {
     }
 
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const toggleFoodPreference = (foodType) => {
+    setForm((current) => {
+      const selected = current.preferred_food_types.includes(foodType);
+
+      return {
+        ...current,
+        preferred_food_types: selected
+          ? current.preferred_food_types.filter((item) => item !== foodType)
+          : [...current.preferred_food_types, foodType]
+      };
+    });
   };
 
   const geocodeLocation = async (location) => {
@@ -116,6 +134,11 @@ function Profile() {
         password: form.password || undefined,
         notification_mode: form.notification_mode
       };
+
+      if (user?.role === "recipient") {
+        payload.preferred_food_types = form.preferred_food_types;
+        payload.food_notifications_enabled = form.food_notifications_enabled;
+      }
 
       if (user?.role !== "admin") {
         const nextLocation = form.location.trim();
@@ -191,6 +214,12 @@ function Profile() {
           {user?.role !== "admin" && (
             <p><span>Notifications:</span> {user?.notification_mode || "whatsapp"}</p>
           )}
+          {user?.role === "recipient" && (
+            <p><span>Food alerts:</span> {user?.food_notifications_enabled === false ? "Off" : "On"}</p>
+          )}
+          {user?.role === "recipient" && (
+            <p><span>Food preferences:</span> {(user?.preferred_food_types || []).join(", ") || "All food"}</p>
+          )}
           {user?.role === "donor" && user?.verification_status === "verified" && (
             <>
               <p><span>Status:</span> Verified donor</p>
@@ -255,6 +284,32 @@ function Profile() {
                 { value: "sms", label: "SMS" }
               ]}
             />
+          )}
+
+          {user?.role === "recipient" && (
+            <div className="preference-panel">
+              <p className="form-label">Food preferences</p>
+              <div className="preference-grid">
+                {FOOD_CATEGORIES.map((option) => (
+                  <label key={option.value} className="preference-check">
+                    <input
+                      type="checkbox"
+                      checked={form.preferred_food_types.includes(option.value)}
+                      onChange={() => toggleFoodPreference(option.value)}
+                    />
+                    <span>{option.label}</span>
+                  </label>
+                ))}
+              </div>
+              <label className="preference-toggle">
+                <input
+                  type="checkbox"
+                  checked={form.food_notifications_enabled}
+                  onChange={(event) => setForm({ ...form, food_notifications_enabled: event.target.checked })}
+                />
+                <span>Receive notifications when matching food is posted</span>
+              </label>
+            </div>
           )}
 
           <button

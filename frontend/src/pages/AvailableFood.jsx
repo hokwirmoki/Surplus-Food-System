@@ -8,7 +8,8 @@ import {
   FaClock,
   FaMapMarkerAlt,
   FaBoxOpen,
-  FaCheckCircle
+  FaCheckCircle,
+  FaUser
 } from "react-icons/fa";
 
 import "../styles/availableFood.css";
@@ -222,6 +223,11 @@ function AvailableFood() {
                 <FaCheckCircle /> Verified donor
               </span>
             )}
+
+            <p className="meta donor-name">
+              <FaUser className="icon small" />
+              <strong>Donor:</strong> {f.donor_name || "Unknown donor"}
+            </p>
 
             <p className="meta">
               <strong>Quantity:</strong> {f.quantity}
