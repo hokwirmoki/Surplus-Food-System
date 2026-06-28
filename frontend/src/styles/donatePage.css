@@ -78,36 +78,6 @@
   margin-bottom: 0;
 }
 
-.impact-preview {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0 0 12px;
-  padding: 12px;
-  border: 1px solid rgba(46, 125, 50, 0.18);
-  border-radius: 12px;
-  background: var(--surface-alt);
-}
-
-.impact-preview div {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.impact-preview span {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.impact-preview strong {
-  color: var(--green-dark);
-  font-size: 15px;
-  line-height: 1.2;
-  text-transform: capitalize;
-}
-
 .donate-card input[type="datetime-local"],
 .date-picker-input {
   color-scheme: light;
@@ -352,7 +322,7 @@ table {
 }
 
 .food-table table {
-  min-width: 780px;
+  min-width: 680px;
 }
 
 th, td {
@@ -530,8 +500,7 @@ th, td {
     grid-template-columns: 1fr;
   }
 
-  .quantity-row,
-  .impact-preview {
+  .quantity-row {
     grid-template-columns: 1fr;
   }
 

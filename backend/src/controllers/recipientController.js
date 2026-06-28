@@ -73,7 +73,25 @@ exports.getAvailableFood = async (req, res) => {
        ),
        available_food AS (
          SELECT
-           f.*,
+           f.id,
+           f.donor_id,
+           f.food_type,
+           f.food_description,
+           f.dietary_tags,
+           f.quantity,
+           f.quantity_amount,
+           f.quantity_unit,
+           f.location,
+           f.expiry_time,
+           f.status,
+           f.contains_pork,
+           f.is_discounted,
+           f.discount_price,
+           f.claimed_by,
+           f.pickup_status,
+           f.latitude,
+           f.longitude,
+           f.created_at,
            u.name as donor_name,
            (
              u.verification_status = 'verified'
@@ -168,11 +186,6 @@ exports.claimFood = async (req, res) => {
       return res.status(400).json({ message: "Payment provider and number are required" });
     }
 
-    const requestedQuantity = Number(quantity) || 1;
-    if (requestedQuantity <= 0) {
-      return res.status(400).json({ message: "Quantity must be at least 1" });
-    }
-
     await client.query("BEGIN");
     transactionStarted = true;
 
@@ -214,6 +227,16 @@ exports.claimFood = async (req, res) => {
     }
 
     const availableQuantity = parseQuantity(food.quantity);
+    const requestedQuantity = quantity === undefined || quantity === null || String(quantity).trim() === ""
+      ? availableQuantity
+      : Number(quantity);
+
+    if (!Number.isFinite(requestedQuantity) || requestedQuantity <= 0) {
+      await client.query("ROLLBACK");
+      transactionStarted = false;
+      return res.status(400).json({ message: "Quantity must be at least 1" });
+    }
+
     if (requestedQuantity > availableQuantity) {
       await client.query("ROLLBACK");
       transactionStarted = false;

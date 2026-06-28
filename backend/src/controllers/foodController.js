@@ -32,6 +32,20 @@ function formatDietaryTags(tags) {
   return "No dietary label";
 }
 
+function withoutImpactFields(food) {
+  const {
+    estimated_unit_weight_kg,
+    estimated_weight_kg,
+    emission_factor_kg_co2e_per_kg,
+    co2e_saved_kg,
+    impact_confidence,
+    impact_method,
+    ...publicFood
+  } = food;
+
+  return publicFood;
+}
+
 exports.postFood = async (req, res) => {
   try {
     const donor_id = req.user.id;
@@ -137,7 +151,7 @@ exports.postFood = async (req, res) => {
     );
 
     const savedFood = food.rows[0];
-    res.status(201).json(savedFood);
+    res.status(201).json(withoutImpactFields(savedFood));
 
     setImmediate(async () => {
       try {
@@ -244,7 +258,6 @@ exports.postFood = async (req, res) => {
           `Dietary: ${formatDietaryTags(savedFood.dietary_tags)}`,
           `Pork: ${savedFood.contains_pork ? "Yes" : "No"}`,
           `Quantity: ${savedFood.quantity}`,
-          `Estimated impact: ${savedFood.co2e_saved_kg || 0} kg CO2e avoided`,
           `Location: ${savedFood.location || "GPS Location"}`,
           "",
           "Open in Google Maps:",
@@ -284,7 +297,26 @@ exports.getPostedFood = async (req, res) => {
     await updateExpiredFood();
 
     const foods = await db.query(
-      `SELECT *
+      `SELECT
+         id,
+         donor_id,
+         food_type,
+         food_description,
+         dietary_tags,
+         quantity,
+         quantity_amount,
+         quantity_unit,
+         location,
+         expiry_time,
+         status,
+         contains_pork,
+         is_discounted,
+         discount_price,
+         claimed_by,
+         pickup_status,
+         latitude,
+         longitude,
+         created_at
        FROM food_items
        WHERE donor_id = $1
        AND status = 'available'

@@ -15,7 +15,7 @@ import DateTimePicker from "../components/DateTimePicker";
 import SelectMenu from "../components/SelectMenu";
 import { FOOD_CATEGORIES } from "../constants/foodCategories";
 import { FOOD_DIETARY_TYPES, getDietaryLabel } from "../constants/dietaryOptions";
-import { QUANTITY_UNITS, estimateFoodImpact, getDefaultUnitForCategory } from "../constants/foodImpact";
+import { QUANTITY_UNITS, getDefaultUnitForCategory } from "../constants/foodImpact";
 
 const MIN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 const EXPIRY_ERROR_MESSAGE = "Expiry time must be more than 5 minutes from now.";
@@ -80,6 +80,7 @@ function DonatePage() {
   const [foods, setFoods] = useState([]);
   const [showMap, setShowMap] = useState(false);
   const [locationSource, setLocationSource] = useState(savedLocation ? "saved" : "");
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
 
   // PAGINATION
   const [currentPage, setCurrentPage] = useState(1);
@@ -239,23 +240,20 @@ function DonatePage() {
     });
   };
 
-  const formatDate = (date) => {
+  const getTimeLeft = (date) => {
     if (!date) return "No expiry";
-    return new Date(date).toLocaleString();
-  };
+    const diff = new Date(date).getTime() - currentTime;
 
-  const formatEstimate = (value) => {
-    const numericValue = Number(value || 0);
-    return numericValue.toLocaleString(undefined, {
-      maximumFractionDigits: 2
-    });
-  };
+    if (diff <= 0) return "Expired";
 
-  const impactPreview = estimateFoodImpact(
-    form.food_type,
-    form.quantity_amount,
-    form.quantity_unit
-  );
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (days > 0) return `${days}d ${hours}h left`;
+    if (hours > 0) return `${hours}h ${minutes}m left`;
+    return `${minutes}m left`;
+  };
 
   const postFood = async () => {
     if (!validateFood()) return;
@@ -357,6 +355,14 @@ function DonatePage() {
     useCurrentLocation({ silent: true });
   }, [useCurrentLocation]);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 30000);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
   /* PAGINATION LOGIC */
   const indexOfLast = currentPage * itemsPerPage;
   const indexOfFirst = indexOfLast - itemsPerPage;
@@ -433,23 +439,6 @@ function DonatePage() {
             />
           </div>
 
-          {impactPreview && (
-            <div className="impact-preview">
-              <div>
-                <span>Estimated weight</span>
-                <strong>{formatEstimate(impactPreview.estimatedWeightKg)} kg</strong>
-              </div>
-              <div>
-                <span>Estimated CO2e avoided</span>
-                <strong>{formatEstimate(impactPreview.co2eSavedKg)} kg</strong>
-              </div>
-              <div>
-                <span>Confidence</span>
-                <strong>{impactPreview.confidence}</strong>
-              </div>
-            </div>
-          )}
-
           {isDiscounted && (
             <input
               name="price"
@@ -510,9 +499,7 @@ function DonatePage() {
                 <th>Description</th>
                 <th>Dietary</th>
                 <th>Pork</th>
-                <th>Qty</th>
-                <th>Kg</th>
-                <th>CO2e Avoided</th>
+                <th>Amount Donated</th>
                 <th>Price</th>
                 <th>Expiry</th>
                 <th>Status</th>
@@ -527,10 +514,8 @@ function DonatePage() {
                   <td>{getDietaryLabel(food.dietary_tags)}</td>
                   <td>{food.contains_pork ? "Yes" : "No"}</td>
                   <td>{food.quantity}</td>
-                  <td>{food.estimated_weight_kg ? `${formatEstimate(food.estimated_weight_kg)} kg` : "N/A"}</td>
-                  <td>{food.co2e_saved_kg ? `${formatEstimate(food.co2e_saved_kg)} kg` : "N/A"}</td>
                   <td>{food.discount_price ? formatUGX(food.discount_price) : 'Free'}</td>
-                  <td>{formatDate(food.expiry_time)}</td>
+                  <td>{getTimeLeft(food.expiry_time)}</td>
 
                   <td>
                     <span className={`status ${food.status?.toLowerCase()}`}>

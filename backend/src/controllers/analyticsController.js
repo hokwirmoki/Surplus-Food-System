@@ -144,8 +144,7 @@ exports.getDonorAnalytics = async (req, res) => {
            COALESCE(estimated_weight_kg, COALESCE(CAST(NULLIF(regexp_replace(quantity, '[^0-9\\.]', '', 'g'), '') AS numeric), 0) * 0.5)
            + claimed_qty * unit_weight_kg
          ), 0) AS donated_kg,
-         COALESCE(SUM(claimed_qty * unit_weight_kg), 0) AS claimed_kg,
-         COALESCE(SUM(claimed_qty * unit_weight_kg * 2.5), 0) AS co2e_saved
+         COALESCE(SUM(claimed_qty * unit_weight_kg), 0) AS claimed_kg
        FROM food_impact`,
       [donor_id]
     );
@@ -173,23 +172,6 @@ exports.getDonorAnalytics = async (req, res) => {
          f.id,
          f.food_type,
          f.quantity,
-         (
-           COALESCE(f.estimated_weight_kg, COALESCE(CAST(NULLIF(regexp_replace(f.quantity, '[^0-9\\.]', '', 'g'), '') AS numeric), 0) * 0.5)
-           + COALESCE(cb.claimed_qty, 0) * COALESCE(
-             f.estimated_unit_weight_kg,
-             f.estimated_weight_kg / NULLIF(f.quantity_amount, 0),
-             0.5
-           )
-         ) AS estimated_weight_kg,
-         (
-           COALESCE(f.estimated_weight_kg, COALESCE(CAST(NULLIF(regexp_replace(f.quantity, '[^0-9\\.]', '', 'g'), '') AS numeric), 0) * 0.5)
-           + COALESCE(cb.claimed_qty, 0) * COALESCE(
-             f.estimated_unit_weight_kg,
-             f.estimated_weight_kg / NULLIF(f.quantity_amount, 0),
-             0.5
-           )
-         ) * 2.5 AS co2e_saved_kg,
-         f.impact_confidence,
          f.status,
          f.is_discounted,
          f.created_at,
@@ -204,7 +186,6 @@ exports.getDonorAnalytics = async (req, res) => {
     res.json({
       totalDonated: Number(Number(impactTotals.rows[0].donated_kg || 0).toFixed(2)),
       totalClaimed: Number(Number(impactTotals.rows[0].claimed_kg || 0).toFixed(2)),
-      co2eSaved: Number(Number(impactTotals.rows[0].co2e_saved || 0).toFixed(2)),
       peopleHelped: Number(peopleHelped.rows[0].count),
       history: history.rows,
       predictive: buildTimingRecommendation(history.rows)

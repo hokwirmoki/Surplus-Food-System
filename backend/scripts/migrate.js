@@ -128,7 +128,7 @@ async function migrate() {
                 id SERIAL PRIMARY KEY,
                 food_id INTEGER REFERENCES food_items(id),
                 recipient_id INTEGER REFERENCES users(id),
-                quantity INTEGER DEFAULT 1,
+                quantity NUMERIC(10,2) DEFAULT 1,
                 status TEXT DEFAULT 'claimed',
                 reservation_fee_paid BOOLEAN DEFAULT FALSE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -158,10 +158,16 @@ async function migrate() {
 
         await db.query(`
             ALTER TABLE claims
-            ADD COLUMN IF NOT EXISTS quantity INTEGER DEFAULT 1,
+            ADD COLUMN IF NOT EXISTS quantity NUMERIC(10,2) DEFAULT 1,
             ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'claimed',
             ADD COLUMN IF NOT EXISTS reservation_fee_paid BOOLEAN DEFAULT FALSE,
             ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        `);
+
+        await db.query(`
+            ALTER TABLE claims
+            ALTER COLUMN quantity TYPE NUMERIC(10,2)
+            USING quantity::numeric
         `);
 
         await db.query(`

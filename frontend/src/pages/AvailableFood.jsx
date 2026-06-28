@@ -79,9 +79,25 @@ function AvailableFood() {
     setPaymentLoading(false);
   };
 
+  const getAvailableQuantity = (food) => {
+    const parsed = Number.parseFloat(String(food?.quantity || "").replace(/[^0-9.]/g, ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const getRequestedQuantity = (food) => {
+    const rawValue = claimQuantities[food.id];
+
+    if (rawValue === undefined || String(rawValue).trim() === "") {
+      return getAvailableQuantity(food);
+    }
+
+    const parsed = Number.parseFloat(rawValue);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
   const claimFood = async (food, paymentProvider, paymentNumber, paymentReference) => {
     try {
-      const requestedQuantity = parseInt(claimQuantities[food.id] || "", 10);
+      const requestedQuantity = getRequestedQuantity(food);
 
       if (!requestedQuantity || requestedQuantity <= 0) {
         toast.error("Please enter a valid quantity to claim");
@@ -109,7 +125,7 @@ function AvailableFood() {
         ...prev,
         [food.id]: "",
       }));
-      const availableQuantity = parseInt(String(food.quantity).replace(/[^0-9]/g, ""), 10);
+      const availableQuantity = getAvailableQuantity(food);
       if (Number.isFinite(availableQuantity) && requestedQuantity >= availableQuantity) {
         setFoods((current) => current.filter((item) => item.id !== food.id));
       }
@@ -122,7 +138,7 @@ function AvailableFood() {
 
   const confirmPayment = async () => {
     if (!selectedFood) return;
-    const requestedQuantity = parseInt(claimQuantities[selectedFood.id] || "", 10);
+    const requestedQuantity = getRequestedQuantity(selectedFood);
 
     if (!requestedQuantity || requestedQuantity <= 0) {
       toast.error("Please enter a valid quantity to claim");
@@ -179,13 +195,6 @@ function AvailableFood() {
     );
 
     return `${hours}h ${minutes}m left`;
-  };
-
-  const formatEstimate = (value) => {
-    const numericValue = Number(value || 0);
-    return numericValue.toLocaleString(undefined, {
-      maximumFractionDigits: 2
-    });
   };
 
   const openMap = (lat, lng, location) => {
@@ -256,18 +265,6 @@ function AvailableFood() {
               <strong>Quantity:</strong> {f.quantity}
             </p>
 
-            {f.estimated_weight_kg && (
-              <p className="meta">
-                <strong>Estimated weight:</strong> {formatEstimate(f.estimated_weight_kg)} kg
-              </p>
-            )}
-
-            {f.co2e_saved_kg && (
-              <p className="meta">
-                <strong>Estimated impact:</strong> {formatEstimate(f.co2e_saved_kg)} kg CO2e avoided
-              </p>
-            )}
-
             <p className="meta location">
               <FaMapMarkerAlt className="icon small" />
               {f.location}
@@ -293,7 +290,7 @@ function AvailableFood() {
                 min="1"
                 value={claimQuantities[f.id] || ""}
                 onChange={(e) => handleQuantityChange(f.id, e.target.value)}
-                placeholder={`Qty (available ${f.quantity})`}
+                placeholder={`Qty (blank claims all ${f.quantity})`}
               />
             </div>
 
@@ -359,7 +356,7 @@ function AvailableFood() {
                 <label>Amount</label>
                 <div className="payment-summary modal-value">
                   {selectedFood.is_discounted
-                    ? formatUGX((selectedFood.discount_price || 0) * (parseInt(claimQuantities[selectedFood.id] || "1", 10) || 1))
+                    ? formatUGX((selectedFood.discount_price || 0) * (getRequestedQuantity(selectedFood) || getAvailableQuantity(selectedFood) || 1))
                     : formatUGX(1000)}
                 </div>
               </div>
