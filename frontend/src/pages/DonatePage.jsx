@@ -15,6 +15,7 @@ import DateTimePicker from "../components/DateTimePicker";
 import SelectMenu from "../components/SelectMenu";
 import { FOOD_CATEGORIES } from "../constants/foodCategories";
 import { FOOD_DIETARY_TYPES, getDietaryLabel } from "../constants/dietaryOptions";
+import { QUANTITY_UNITS, estimateFoodImpact, getDefaultUnitForCategory } from "../constants/foodImpact";
 
 const MIN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 const EXPIRY_ERROR_MESSAGE = "Expiry time must be more than 5 minutes from now.";
@@ -67,7 +68,8 @@ function DonatePage() {
     food_description: "",
     dietary_type: "",
     contains_pork: "",
-    quantity: "",
+    quantity_amount: "",
+    quantity_unit: "kg",
     expiry_time: "",
     price: "",
     location: savedLocation,
@@ -120,8 +122,15 @@ function DonatePage() {
   };
 
   const validateFood = () => {
-    if (!form.food_type.trim() || !form.food_description.trim() || !form.dietary_type || !form.quantity.trim() || !form.expiry_time) {
+    if (!form.food_type.trim() || !form.food_description.trim() || !form.dietary_type || !form.quantity_amount.trim() || !form.quantity_unit || !form.expiry_time) {
       toast.error("Please fill in food category, description, dietary type, quantity and expiry time.");
+      return false;
+    }
+
+    const quantityAmount = Number(form.quantity_amount);
+
+    if (!Number.isFinite(quantityAmount) || quantityAmount <= 0) {
+      toast.error("Quantity amount must be a positive number.");
       return false;
     }
 
@@ -235,6 +244,19 @@ function DonatePage() {
     return new Date(date).toLocaleString();
   };
 
+  const formatEstimate = (value) => {
+    const numericValue = Number(value || 0);
+    return numericValue.toLocaleString(undefined, {
+      maximumFractionDigits: 2
+    });
+  };
+
+  const impactPreview = estimateFoodImpact(
+    form.food_type,
+    form.quantity_amount,
+    form.quantity_unit
+  );
+
   const postFood = async () => {
     if (!validateFood()) return;
 
@@ -253,7 +275,9 @@ function DonatePage() {
         food_description: form.food_description,
         dietary_type: form.dietary_type,
         contains_pork: form.contains_pork === "true",
-        quantity: form.quantity,
+        quantity_amount: Number(form.quantity_amount),
+        quantity_unit: form.quantity_unit,
+        quantity: `${form.quantity_amount} ${form.quantity_unit}`,
         expiry_time: form.expiry_time,
         is_discounted: isDiscounted,
         price: isDiscounted ? form.price : null,
@@ -271,7 +295,8 @@ function DonatePage() {
         food_description: "",
         dietary_type: "",
         contains_pork: "",
-        quantity: "",
+        quantity_amount: "",
+        quantity_unit: "kg",
         expiry_time: "",
         price: "",
         location: form.location,
@@ -350,7 +375,11 @@ function DonatePage() {
 
           <SelectMenu
             value={form.food_type}
-            onChange={(food_type) => setForm({ ...form, food_type })}
+            onChange={(food_type) => setForm({
+              ...form,
+              food_type,
+              quantity_unit: getDefaultUnitForCategory(food_type)
+            })}
             options={FOOD_CATEGORIES}
             placeholder="Food Category"
             className="donate-select"
@@ -384,12 +413,42 @@ function DonatePage() {
             className="donate-select"
           />
 
-          <input
-            name="quantity"
-            value={form.quantity}
-            placeholder="Quantity"
-            onChange={handleChange}
-          />
+          <div className="quantity-row">
+            <input
+              name="quantity_amount"
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.quantity_amount}
+              placeholder="Quantity amount"
+              onChange={handleChange}
+            />
+
+            <SelectMenu
+              value={form.quantity_unit}
+              onChange={(quantity_unit) => setForm({ ...form, quantity_unit })}
+              options={QUANTITY_UNITS}
+              placeholder="Unit"
+              className="donate-select quantity-unit-select"
+            />
+          </div>
+
+          {impactPreview && (
+            <div className="impact-preview">
+              <div>
+                <span>Estimated weight</span>
+                <strong>{formatEstimate(impactPreview.estimatedWeightKg)} kg</strong>
+              </div>
+              <div>
+                <span>Estimated CO2e avoided</span>
+                <strong>{formatEstimate(impactPreview.co2eSavedKg)} kg</strong>
+              </div>
+              <div>
+                <span>Confidence</span>
+                <strong>{impactPreview.confidence}</strong>
+              </div>
+            </div>
+          )}
 
           {isDiscounted && (
             <input
@@ -452,6 +511,8 @@ function DonatePage() {
                 <th>Dietary</th>
                 <th>Pork</th>
                 <th>Qty</th>
+                <th>Kg</th>
+                <th>CO2e Avoided</th>
                 <th>Price</th>
                 <th>Expiry</th>
                 <th>Status</th>
@@ -466,6 +527,8 @@ function DonatePage() {
                   <td>{getDietaryLabel(food.dietary_tags)}</td>
                   <td>{food.contains_pork ? "Yes" : "No"}</td>
                   <td>{food.quantity}</td>
+                  <td>{food.estimated_weight_kg ? `${formatEstimate(food.estimated_weight_kg)} kg` : "N/A"}</td>
+                  <td>{food.co2e_saved_kg ? `${formatEstimate(food.co2e_saved_kg)} kg` : "N/A"}</td>
                   <td>{food.discount_price ? formatUGX(food.discount_price) : 'Free'}</td>
                   <td>{formatDate(food.expiry_time)}</td>
 

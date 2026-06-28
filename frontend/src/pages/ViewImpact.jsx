@@ -31,7 +31,7 @@ function ViewImpact() {
         <div>
           <h2>System Impact Metrics</h2>
           <p className="analytics-subtitle">
-            A summary of claimed plates, redistributed food, and carbon savings using the 2 plates = 1 kg rule.
+            A summary of claimed food units, redistributed kilograms, and estimated carbon avoided using the FAO-derived 2.5 kgCO2e/kg average.
           </p>
         </div>
       </div>
@@ -53,8 +53,8 @@ function ViewImpact() {
         </div>
 
         <div className="metric-card">
-          <h3>Total Plates Claimed</h3>
-          <p>{metrics.totalFoodClaimedPlates || 0}</p>
+          <h3>Total Units Claimed</h3>
+          <p>{metrics.totalFoodClaimedUnits || metrics.totalFoodClaimedPlates || 0}</p>
         </div>
 
         <div className="metric-card">
@@ -68,7 +68,7 @@ function ViewImpact() {
         </div>
 
         <div className="metric-card">
-          <h3>CO2 Saved (kg)</h3>
+          <h3>CO2e Avoided (kg)</h3>
           <p>{metrics.co2Saved || 0}</p>
         </div>
       </div>

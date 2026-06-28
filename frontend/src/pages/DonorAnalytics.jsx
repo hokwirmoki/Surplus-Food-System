@@ -22,6 +22,7 @@ function DonorAnalytics() {
   const [data, setData] = useState({
     totalDonated: 0,
     totalClaimed: 0,
+    co2eSaved: 0,
     peopleHelped: 0,
     history: [],
     predictive: { bestPostingWindow: "11:00 - 14:00" }
@@ -38,6 +39,7 @@ function DonorAnalytics() {
       setData(res.data || {
         totalDonated: 0,
         totalClaimed: 0,
+        co2eSaved: 0,
         peopleHelped: 0,
         history: [],
         predictive: { bestPostingWindow: "11:00 - 14:00" }
@@ -76,6 +78,12 @@ function DonorAnalytics() {
     return new Date(date).toLocaleString();
   };
 
+  const formatNumber = (value) => {
+    return Number(value || 0).toLocaleString(undefined, {
+      maximumFractionDigits: 2
+    });
+  };
+
   const safeHistory = data.history || [];
 
   const startIndex = (page - 1) * pageSize;
@@ -97,13 +105,18 @@ function DonorAnalytics() {
       <div className="stats-grid">
 
         <div className="stat-card">
-          <h3>Total Donated Plates</h3>
-          <h2>{data.totalDonated}</h2>
+          <h3>Total Donated Kg</h3>
+          <h2>{formatNumber(data.totalDonated)}</h2>
         </div>
 
         <div className="stat-card">
-          <h3>Total Plates Claimed</h3>
-          <h2>{data.totalClaimed}</h2>
+          <h3>Total Claimed Kg</h3>
+          <h2>{formatNumber(data.totalClaimed)}</h2>
+        </div>
+
+        <div className="stat-card">
+          <h3>CO2e Avoided Kg</h3>
+          <h2>{formatNumber(data.co2eSaved)}</h2>
         </div>
 
         <div className="stat-card">
@@ -131,6 +144,8 @@ function DonorAnalytics() {
             <tr>
               <th>Food Type</th>
               <th>Quantity</th>
+              <th>Est. Kg</th>
+              <th>Est. CO2e Avoided</th>
               <th>Status</th>
               <th>Date Posted</th>
               <th>Date Claimed</th>
@@ -140,7 +155,7 @@ function DonorAnalytics() {
           <tbody>
             {paginatedHistory.length === 0 ? (
               <tr>
-                <td colSpan="5" style={{ textAlign: "center" }}>
+                <td colSpan="7" style={{ textAlign: "center" }}>
                   No donation history found for this donor.
                 </td>
               </tr>
@@ -151,6 +166,8 @@ function DonorAnalytics() {
                 <tr key={index}>
                   <td>{item.food_type}</td>
                   <td>{item.quantity}</td>
+                  <td>{formatNumber(item.estimated_weight_kg)}</td>
+                  <td>{formatNumber(item.co2e_saved_kg)}</td>
 
                   {/* STATUS */}
                   <td>

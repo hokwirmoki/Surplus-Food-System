@@ -119,29 +119,34 @@ exports.getDonorAnalytics = async (req, res) => {
       });
     }
 
-    // ---------------- TOTAL DONATED ----------------
-    const totalDonated = await db.query(
+    // ---------------- DONATION IMPACT ----------------
+    const impactTotals = await db.query(
       `WITH claimed_by_food AS (
          SELECT food_id, COALESCE(SUM(quantity), 0) AS claimed_qty
          FROM claims
          GROUP BY food_id
+       ),
+       food_impact AS (
+         SELECT
+           f.*,
+           COALESCE(
+             f.estimated_unit_weight_kg,
+             f.estimated_weight_kg / NULLIF(f.quantity_amount, 0),
+             0.5
+           ) AS unit_weight_kg,
+           COALESCE(c.claimed_qty, 0) AS claimed_qty
+         FROM food_items f
+         LEFT JOIN claimed_by_food c ON c.food_id = f.id
+         WHERE f.donor_id = $1
        )
-       SELECT COALESCE(SUM((
-         COALESCE(CAST(NULLIF(regexp_replace(f.quantity, '[^0-9\\.]', '', 'g'), '') AS numeric), 0)
-         + COALESCE(c.claimed_qty, 0)
-       )), 0) AS total
-       FROM food_items f
-       LEFT JOIN claimed_by_food c ON c.food_id = f.id
-       WHERE f.donor_id = $1`,
-      [donor_id]
-    );
-
-    // ---------------- TOTAL CLAIMED ----------------
-    const totalClaimed = await db.query(
-      `SELECT COALESCE(SUM(c.quantity), 0) AS total
-       FROM claims c
-       JOIN food_items f ON f.id = c.food_id
-       WHERE f.donor_id = $1`,
+       SELECT
+         COALESCE(SUM(
+           COALESCE(estimated_weight_kg, COALESCE(CAST(NULLIF(regexp_replace(quantity, '[^0-9\\.]', '', 'g'), '') AS numeric), 0) * 0.5)
+           + claimed_qty * unit_weight_kg
+         ), 0) AS donated_kg,
+         COALESCE(SUM(claimed_qty * unit_weight_kg), 0) AS claimed_kg,
+         COALESCE(SUM(claimed_qty * unit_weight_kg * 2.5), 0) AS co2e_saved
+       FROM food_impact`,
       [donor_id]
     );
 
@@ -167,10 +172,24 @@ exports.getDonorAnalytics = async (req, res) => {
        SELECT
          f.id,
          f.food_type,
+         f.quantity,
          (
-           COALESCE(CAST(NULLIF(regexp_replace(f.quantity, '[^0-9\\.]', '', 'g'), '') AS numeric), 0)
-           + COALESCE(cb.claimed_qty, 0)
-         ) AS quantity,
+           COALESCE(f.estimated_weight_kg, COALESCE(CAST(NULLIF(regexp_replace(f.quantity, '[^0-9\\.]', '', 'g'), '') AS numeric), 0) * 0.5)
+           + COALESCE(cb.claimed_qty, 0) * COALESCE(
+             f.estimated_unit_weight_kg,
+             f.estimated_weight_kg / NULLIF(f.quantity_amount, 0),
+             0.5
+           )
+         ) AS estimated_weight_kg,
+         (
+           COALESCE(f.estimated_weight_kg, COALESCE(CAST(NULLIF(regexp_replace(f.quantity, '[^0-9\\.]', '', 'g'), '') AS numeric), 0) * 0.5)
+           + COALESCE(cb.claimed_qty, 0) * COALESCE(
+             f.estimated_unit_weight_kg,
+             f.estimated_weight_kg / NULLIF(f.quantity_amount, 0),
+             0.5
+           )
+         ) * 2.5 AS co2e_saved_kg,
+         f.impact_confidence,
          f.status,
          f.is_discounted,
          f.created_at,
@@ -183,8 +202,9 @@ exports.getDonorAnalytics = async (req, res) => {
     );
 
     res.json({
-      totalDonated: Number(totalDonated.rows[0].total),
-      totalClaimed: Number(totalClaimed.rows[0].total),
+      totalDonated: Number(Number(impactTotals.rows[0].donated_kg || 0).toFixed(2)),
+      totalClaimed: Number(Number(impactTotals.rows[0].claimed_kg || 0).toFixed(2)),
+      co2eSaved: Number(Number(impactTotals.rows[0].co2e_saved || 0).toFixed(2)),
       peopleHelped: Number(peopleHelped.rows[0].count),
       history: history.rows,
       predictive: buildTimingRecommendation(history.rows)

@@ -7,6 +7,7 @@ const {
   createSandboxPayment,
   consumeSuccessfulPayment,
 } = require("../../utils/paymentService");
+const { estimateFoodImpact } = require("../../utils/foodImpact");
 
 const NEARBY_RADIUS_KM = Number(process.env.NEARBY_RADIUS_KM || 10);
 
@@ -146,7 +147,7 @@ exports.getAvailableFood = async (req, res) => {
 };
 
 function parseQuantity(value) {
-  const parsed = Number.parseInt(String(value).replace(/[^0-9]/g, ""), 10);
+  const parsed = Number.parseFloat(String(value).replace(/[^0-9.]/g, ""));
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
@@ -221,6 +222,24 @@ exports.claimFood = async (req, res) => {
 
     const remainingQuantity = availableQuantity - requestedQuantity;
     const newStatus = remainingQuantity === 0 ? "claimed" : "available";
+    const remainingImpact = remainingQuantity > 0
+      ? estimateFoodImpact({
+        foodType: food.food_type,
+        quantityAmount: remainingQuantity,
+        quantityUnit: food.quantity_unit,
+        quantity: food.quantity
+      })
+      : {
+        quantityDisplay: `0 ${food.quantity_unit || "units"}`,
+        quantityAmount: 0,
+        quantityUnit: food.quantity_unit,
+        estimatedUnitWeightKg: food.estimated_unit_weight_kg,
+        estimatedWeightKg: 0,
+        emissionFactorKgCo2ePerKg: food.emission_factor_kg_co2e_per_kg,
+        co2eSavedKg: 0,
+        confidence: food.impact_confidence,
+        method: food.impact_method
+      };
     const isDiscounted = Boolean(food.is_discounted);
     const paymentAmount = isDiscounted ? Number(food.discount_price || 0) * requestedQuantity : 1000;
     const transactionType = isDiscounted ? "purchase" : "reservation";
@@ -246,10 +265,31 @@ exports.claimFood = async (req, res) => {
     await client.query(
       `UPDATE food_items
        SET quantity = $1::varchar,
-           status = $2::varchar,
-           claimed_by = CASE WHEN $2::varchar = 'claimed' THEN $3 ELSE claimed_by END
-       WHERE id = $4`,
-      [remainingQuantity, newStatus, recipient_id, food_id]
+           quantity_amount = $2,
+           quantity_unit = COALESCE($3, quantity_unit),
+           estimated_unit_weight_kg = COALESCE($4, estimated_unit_weight_kg),
+           estimated_weight_kg = $5,
+           emission_factor_kg_co2e_per_kg = COALESCE($6, emission_factor_kg_co2e_per_kg),
+           co2e_saved_kg = $7,
+           impact_confidence = COALESCE($8, impact_confidence),
+           impact_method = COALESCE($9, impact_method),
+           status = $10::varchar,
+           claimed_by = CASE WHEN $10::varchar = 'claimed' THEN $11 ELSE claimed_by END
+       WHERE id = $12`,
+      [
+        remainingImpact.quantityDisplay,
+        remainingImpact.quantityAmount,
+        remainingImpact.quantityUnit,
+        remainingImpact.estimatedUnitWeightKg,
+        remainingImpact.estimatedWeightKg,
+        remainingImpact.emissionFactorKgCo2ePerKg,
+        remainingImpact.co2eSavedKg,
+        remainingImpact.confidence,
+        remainingImpact.method,
+        newStatus,
+        recipient_id,
+        food_id
+      ]
     );
 
     await client.query(

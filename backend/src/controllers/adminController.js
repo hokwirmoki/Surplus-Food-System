@@ -9,8 +9,8 @@ exports.getImpactMetrics = async (req, res) => {
         await updateExpiredFood();
         await expireVerificationBadges();
 
-        const platesPerKg = 2;
-        const co2ePerKg = 2.5;
+        const legacyKgPerClaimUnit = 0.5;
+        const foodWasteCo2ePerKg = 2.5;
 
         // Total users
         const totalUsersResult = await db.query("SELECT COUNT(*) as count FROM users");
@@ -20,13 +20,31 @@ exports.getImpactMetrics = async (req, res) => {
         const activeFoodResult = await db.query("SELECT COUNT(*) as count FROM food_items WHERE status = 'available'");
         const activeFoodListings = parseInt(activeFoodResult.rows[0].count);
 
-            // Total food donated comes from successful claims, where 1 quantity = 1 plate
-                const totalClaimedResult = await db.query(
-                    "SELECT COALESCE(SUM(quantity), 0) AS total FROM claims WHERE status IN ('claimed', 'picked_up')"
-                );
-                const totalFoodClaimedPlates = Number(totalClaimedResult.rows[0].total || 0);
-            const totalFoodClaimedKg = totalFoodClaimedPlates / platesPerKg;
-            const totalFoodDonatedKg = totalFoodClaimedKg;
+        const impactResult = await db.query(
+            `SELECT
+                COALESCE(SUM(c.quantity), 0) AS claimed_units,
+                COALESCE(SUM(
+                    c.quantity * COALESCE(
+                        f.estimated_unit_weight_kg,
+                        f.estimated_weight_kg / NULLIF(f.quantity_amount, 0),
+                        $1
+                    )
+                ), 0) AS claimed_kg,
+                COALESCE(SUM(
+                    c.quantity * COALESCE(
+                        f.estimated_unit_weight_kg,
+                        f.estimated_weight_kg / NULLIF(f.quantity_amount, 0),
+                        $1
+                    ) * $2
+                ), 0) AS co2e_saved
+             FROM claims c
+             JOIN food_items f ON f.id = c.food_id
+             WHERE c.status IN ('claimed', 'picked_up')`,
+            [legacyKgPerClaimUnit, foodWasteCo2ePerKg]
+        );
+
+        const totalFoodClaimedUnits = Number(impactResult.rows[0].claimed_units || 0);
+        const totalFoodDonatedKg = Number(impactResult.rows[0].claimed_kg || 0);
 
         // Total people helped
         const peopleHelpedResult = await db.query(
@@ -45,17 +63,18 @@ exports.getImpactMetrics = async (req, res) => {
         const verifiedDonors = parseInt(verifiedDonorsResult.rows[0].count);
 
         // CO₂ saved
-        const co2Saved = totalFoodDonatedKg * co2ePerKg;
+        const co2Saved = Number(impactResult.rows[0].co2e_saved || 0);
 
         res.json({
             totalUsers,
             activeFoodListings,
-            totalFoodDonatedKg,
-            totalFoodClaimedPlates,
+            totalFoodDonatedKg: Number(totalFoodDonatedKg.toFixed(2)),
+            totalFoodClaimedUnits,
+            totalFoodClaimedPlates: totalFoodClaimedUnits,
             totalPeopleHelped,
             totalPeopleHealed: totalPeopleHelped,
             verifiedDonors,
-            co2Saved
+            co2Saved: Number(co2Saved.toFixed(2))
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

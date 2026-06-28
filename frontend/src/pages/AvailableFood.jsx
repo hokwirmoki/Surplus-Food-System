@@ -181,6 +181,13 @@ function AvailableFood() {
     return `${hours}h ${minutes}m left`;
   };
 
+  const formatEstimate = (value) => {
+    const numericValue = Number(value || 0);
+    return numericValue.toLocaleString(undefined, {
+      maximumFractionDigits: 2
+    });
+  };
+
   const openMap = (lat, lng, location) => {
     if (lat && lng) {
       window.open(
@@ -248,6 +255,18 @@ function AvailableFood() {
             <p className="meta">
               <strong>Quantity:</strong> {f.quantity}
             </p>
+
+            {f.estimated_weight_kg && (
+              <p className="meta">
+                <strong>Estimated weight:</strong> {formatEstimate(f.estimated_weight_kg)} kg
+              </p>
+            )}
+
+            {f.co2e_saved_kg && (
+              <p className="meta">
+                <strong>Estimated impact:</strong> {formatEstimate(f.co2e_saved_kg)} kg CO2e avoided
+              </p>
+            )}
 
             <p className="meta location">
               <FaMapMarkerAlt className="icon small" />

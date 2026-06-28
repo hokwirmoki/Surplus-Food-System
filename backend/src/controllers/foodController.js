@@ -2,6 +2,7 @@ const db = require("../config/db");
 const updateExpiredFood = require("../../utils/foodExpiryUpdater");
 const { sendWhatsApp } = require("../../utils/notificationService");
 const logActivity = require("../../utils/activityLogger");
+const { estimateFoodImpact } = require("../../utils/foodImpact");
 
 const NEARBY_RADIUS_KM = Number(process.env.NEARBY_RADIUS_KM || 10);
 const MIN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
@@ -34,7 +35,7 @@ function formatDietaryTags(tags) {
 exports.postFood = async (req, res) => {
   try {
     const donor_id = req.user.id;
-    const { food_type, food_description, dietary_type, quantity, expiry_time, is_discounted, price, contains_pork } = req.body;
+    const { food_type, food_description, dietary_type, quantity, quantity_amount, quantity_unit, expiry_time, is_discounted, price, contains_pork } = req.body;
     const { location, latitude, longitude } = req.body;
 
     const donorResult = await db.query(
@@ -53,8 +54,6 @@ exports.postFood = async (req, res) => {
         message: "Food location is required. Please enter a location or pick it on the map."
       });
     }
-
-    const numericQuantity = Number.parseInt(String(quantity).replace(/[^0-9]/g, ""), 10);
 
     if (!food_type || !String(food_type).trim()) {
       return res.status(400).json({ message: "Food type is required." });
@@ -82,8 +81,16 @@ exports.postFood = async (req, res) => {
 
     const dietaryTags = getFoodDietaryTags(dietary_type, hasPork);
 
-    if (!Number.isFinite(numericQuantity) || numericQuantity <= 0) {
-      return res.status(400).json({ message: "Quantity must be a positive number." });
+    let impact;
+    try {
+      impact = estimateFoodImpact({
+        foodType: food_type.trim(),
+        quantityAmount: quantity_amount,
+        quantityUnit: quantity_unit,
+        quantity
+      });
+    } catch {
+      return res.status(400).json({ message: "Quantity amount must be a positive number." });
     }
 
     const expiryDate = new Date(expiry_time);
@@ -102,15 +109,23 @@ exports.postFood = async (req, res) => {
 
     const food = await db.query(
       `INSERT INTO food_items
-      (donor_id, food_type, food_description, dietary_tags, quantity, location, expiry_time, status, contains_pork, is_discounted, discount_price, latitude, longitude)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, 'available', $8, $9, $10, $11, $12)
+      (donor_id, food_type, food_description, dietary_tags, quantity, quantity_amount, quantity_unit, estimated_unit_weight_kg, estimated_weight_kg, emission_factor_kg_co2e_per_kg, co2e_saved_kg, impact_confidence, impact_method, location, expiry_time, status, contains_pork, is_discounted, discount_price, latitude, longitude)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'available', $16, $17, $18, $19, $20)
       RETURNING *`,
       [
         donor_id,
         food_type.trim(),
         food_description.trim(),
         dietaryTags,
-        numericQuantity,
+        impact.quantityDisplay,
+        impact.quantityAmount,
+        impact.quantityUnit,
+        impact.estimatedUnitWeightKg,
+        impact.estimatedWeightKg,
+        impact.emissionFactorKgCo2ePerKg,
+        impact.co2eSavedKg,
+        impact.confidence,
+        impact.method,
         location,
         expiry_time,
         hasPork,
@@ -229,6 +244,7 @@ exports.postFood = async (req, res) => {
           `Dietary: ${formatDietaryTags(savedFood.dietary_tags)}`,
           `Pork: ${savedFood.contains_pork ? "Yes" : "No"}`,
           `Quantity: ${savedFood.quantity}`,
+          `Estimated impact: ${savedFood.co2e_saved_kg || 0} kg CO2e avoided`,
           `Location: ${savedFood.location || "GPS Location"}`,
           "",
           "Open in Google Maps:",
