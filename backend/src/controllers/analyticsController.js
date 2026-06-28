@@ -104,6 +104,78 @@ function isVerifiedDonor(user) {
   );
 }
 
+function parseQuantityValue(value) {
+  const parsed = Number.parseFloat(String(value || "").replace(/[^0-9.]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function parseQuantityUnit(value) {
+  const match = String(value || "").toLowerCase().match(/[a-z]+/);
+  const unit = match ? match[0] : "";
+  const aliases = {
+    kilograms: "kg",
+    kilogram: "kg",
+    kgs: "kg",
+    grams: "g",
+    gram: "g",
+    litres: "litre",
+    liters: "litre",
+    liter: "litre",
+    crates: "crate",
+    sacks: "sack",
+    bunches: "bunch",
+    pieces: "piece",
+    boxes: "box",
+    packs: "pack",
+    packets: "packet",
+    trays: "tray",
+    servings: "serving",
+    plates: "plate",
+    loaves: "loaf",
+    bottles: "bottle"
+  };
+
+  return aliases[unit] || unit;
+}
+
+function formatAmount(value) {
+  return String(Number(value.toFixed(2))).replace(/\.0+$/, "");
+}
+
+function formatPostedQuantity(row) {
+  const remainingAmount = row.quantity_amount === null || row.quantity_amount === undefined
+    ? parseQuantityValue(row.quantity)
+    : Number(row.quantity_amount);
+  const claimedAmount = Number(row.claimed_qty || 0);
+  const totalAmount = remainingAmount + claimedAmount;
+  const unit = row.quantity_unit || parseQuantityUnit(row.quantity);
+
+  if (!unit) {
+    return formatAmount(totalAmount);
+  }
+
+  const pluralLabels = {
+    litre: "litres",
+    crate: "crates",
+    sack: "sacks",
+    bunch: "bunches",
+    piece: "pieces",
+    box: "boxes",
+    pack: "packs",
+    packet: "packets",
+    tray: "trays",
+    serving: "servings",
+    plate: "plates",
+    loaf: "loaves",
+    bottle: "bottles"
+  };
+  const label = ["kg", "g"].includes(unit) || totalAmount === 1
+    ? unit
+    : (pluralLabels[unit] || `${unit}s`);
+
+  return `${formatAmount(totalAmount)} ${label}`;
+}
+
 exports.getDonorAnalytics = async (req, res) => {
   try {
     const donor_id = req.user.id;
@@ -172,6 +244,9 @@ exports.getDonorAnalytics = async (req, res) => {
          f.id,
          f.food_type,
          f.quantity,
+         f.quantity_amount,
+         f.quantity_unit,
+         COALESCE(cb.claimed_qty, 0) AS claimed_qty,
          f.status,
          f.is_discounted,
          f.created_at,
@@ -183,12 +258,22 @@ exports.getDonorAnalytics = async (req, res) => {
       [donor_id]
     );
 
+    const historyRows = history.rows.map((row) => ({
+      id: row.id,
+      food_type: row.food_type,
+      quantity: formatPostedQuantity(row),
+      status: row.status,
+      is_discounted: row.is_discounted,
+      created_at: row.created_at,
+      claimed_at: row.claimed_at
+    }));
+
     res.json({
       totalDonated: Number(Number(impactTotals.rows[0].donated_kg || 0).toFixed(2)),
       totalClaimed: Number(Number(impactTotals.rows[0].claimed_kg || 0).toFixed(2)),
       peopleHelped: Number(peopleHelped.rows[0].count),
-      history: history.rows,
-      predictive: buildTimingRecommendation(history.rows)
+      history: historyRows,
+      predictive: buildTimingRecommendation(historyRows)
     });
 
   } catch (err) {
